@@ -33,11 +33,11 @@ df = load_ratings(ratings_file)
 
 #'u0020931'
 
-dados = m.set_enviromment(df, k=20, epochs=20, learning_rate=0.005, random=False)
-exit()
-t = load_targets(targets_file)
+set_up = m.setup(k=10, epochs=30, l_rt=0.01, reg=0.1, random=True, verbose=True)
+dados = m.set_enviromment(df, set_up)
 
-m.predictions(t, dados, verbose=False)
+t = load_targets(targets_file)
+m.get_predictions(t, dados, set_up)
 
 #m.create_utility_matrix(df)
 

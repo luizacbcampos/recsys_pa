@@ -25,6 +25,8 @@ class Dados:
 		#Resultados
 		self.user_embedding = None
 		self.item_embedding = None
+		self.user_bias = None
+		self.item_bias = None
 
 	def get_users(self):
 		return self.users
@@ -49,12 +51,6 @@ class Dados:
 
 	def get_N_tuples(self):
 		return len(self.tuples)
-	
-	def get_user_number(self, u):
-		return self.users_dict[u]
-
-	def get_item_number(self, i):
-		return self.items_dict[i]
 
 	def get_mu(self):
 		return self.mu
@@ -65,29 +61,59 @@ class Dados:
 	def get_items_avg(self):
 		return self.items_avg[:,1] - self.mu
 
-	def get_user_avg(self, u): #u is a NUMBER
-		return self.users_avg[u,1]
-	
-	def get_item_avg(self, i): #i is a NUMBER
-		return self.items_avg[i,1]
-
 	def set_u_emb(self, user_emb):
 		self.user_embedding = user_emb
+
 	def set_i_emb(self, item_emb):
 		self.item_embedding = item_emb
 
-def targets(df):
+	def get_embeddings(self):
+		return self.user_embedding, self.item_embedding
+	
+	def set_u_bias(self, user_b):
+		self.user_bias = user_b
+	
+	def set_i_bias(self, item_b):
+		self.item_bias = item_b
 
-	def make_list(df):
-		return [x for x in df.to_records(index=False)]
-	pass
+	def get_bias(self):
+		return self.user_bias, self.item_bias
+
+	def cleanup_results(self):
+		del self.users_avg
+		del self.items_avg
+		del self.tuples
+
+class setup(object):
+	""" Setup arguments class """
+	def __init__(self, k, epochs, l_rt, reg, random, verbose):
+		self.k = k
+		self.epochs = epochs
+		self.learning_rate = l_rt
+		self.regularizer = reg
+		self.random = random
+		self.verbose = verbose
+	def get(self):
+		return self.k, self.epochs, self.learning_rate, self.regularizer, self.random, self.verbose
+		
+
+
+def target_to_list(df):
+	return [x for x in df.to_records(index=False)]
 
 def get_bias(dados):
 	
 	global_bias = dados.get_mu()
+	user_bias = np.zeros((dados.get_n_users(), 1))
+	item_bias = np.zeros((dados.get_n_items(), 1))
+
+	'''
+	This was causing ratings > 10. It was replaced
+
 	user_bias = np.reshape(dados.get_users_avg(), (-1,1))
 	item_bias = np.reshape(dados.get_items_avg(), (-1,1))
-	
+	'''
+
 	return global_bias, user_bias, item_bias
 
 def create_embeddings(dados, k, random=False):
@@ -112,16 +138,12 @@ def create_embeddings(dados, k, random=False):
 	
 	return user_embedding, item_embedding
 
-def predict_r(user_embedding, item_embedding, global_bias, user_bias, item_bias):
-	r_hat = np.dot(user_embedding, item_embedding.T) + global_bias + user_bias + item_bias
-	return r_hat
-
-def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000001, random=False):
+def set_enviromment(df, set_up):
 	'''
 		k = number of factors = embedding_size
 	'''
 	dados = Dados(df)
-
+	k, epochs, learning_rate, regularizer, random, verbose = set_up.get()
 	#vector and matrix creation
 	user_embedding, item_embedding = create_embeddings(dados, k, random)
 	
@@ -129,10 +151,15 @@ def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000
 
 	N = dados.get_N_tuples()
 
+	dados_tuples = dados.get_tuples()
+	
+	if verbose:
+		print("Running model with {} epochs k = {}, l_rt = {} and reg = {}".format(epochs, k, learning_rate, regularizer))
+
 	def one_epoch(N, epoch=0, verbose=False):
 		erro = 0
 
-		for userIndex, itemIndex, r in dados.get_tuples():
+		for userIndex, itemIndex, r in dados_tuples:
 			
 			ui_dot = 0
 
@@ -147,29 +174,79 @@ def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000
 			erro += res**2
 
 			for f in range(k):
-				user_embedding[userIndex, f] = learning_rate * (res * item_embedding[itemIndex, f] - regularizer* user_embedding[userIndex, f])
-				item_embedding[itemIndex, f] = learning_rate * (res * user_embedding[userIndex, f] - regularizer* item_embedding[itemIndex, f])
+				#ATENÇÃO MUDEI AQUI: COLOQUEI O 2*L_RT
+				user_embedding[userIndex, f] += 2*learning_rate * (res * item_embedding[itemIndex, f] - regularizer* user_embedding[userIndex, f])
+				item_embedding[itemIndex, f] += 2*learning_rate * (res * user_embedding[userIndex, f] - regularizer* item_embedding[itemIndex, f])
 		
 		if verbose:
 			erro = np.sqrt(erro / N)
 			print("Epoch " + str(epoch) + ": Error: " + str(erro))
 	
 	for i in range(epochs):
-		start_time = time.time()
+		#start_time = time.time()
 		one_epoch(N, i, True)
-		print("--- %s : %s seconds ---" % (str(i), time.time() - start_time))
+		#print("--- %s : %s seconds ---" % (str(i), time.time() - start_time))
 
 	# Assign
 	dados.set_u_emb(user_embedding)
 	dados.set_i_emb(item_embedding)
+	dados.set_u_bias(user_bias)
+	dados.set_i_bias(item_bias)
+	dados.cleanup_results()
+
 	return dados
 
-def predictions(in_, dados, verbose=False):
-	test_tuple = [(x[0],x[1]) for x in in_.to_records(index=False)]
-	pred = []
-	exit()
+def print_predictions(test_tuple, predictions):
+	assert len(test_tuple) == len(predictions)
+
+	print("UserId:ItemId,Prediction")
+	for i in range(len(test_tuple)):
+		print("{}:{},{}".format(test_tuple[i][0], test_tuple[i][1], predictions[i]))
+	return
+
+def get_predictions(in_, dados, set_up):
+	
+	k, epochs, learning_rate, regularizer, random, verbose = set_up.get()
+	test_tuple = target_to_list(in_)
+	predictions = []
+
+	#get dicts
+	users_d = dados.get_users_dict()
+	items_d = dados.get_items_dict()
+
+	#get needed bias vectors
+	global_bias = dados.get_mu()
+	user_bias, item_bias = dados.get_bias()
+
+	#get the matrixes
+	user_embedding, item_embedding = dados.get_embeddings()
+	#exit()
 	for i in range(len(test_tuple)):
 		user = test_tuple[i][0]
 		item = test_tuple[i][1]
 
+		#both were in train
+		if user in users_d and item in items_d:
+			userIndex = users_d[user]
+			itemIndex = items_d[item]
+			ui_dot = 0
+			for f in range(k):
+				ui_dot += user_embedding[userIndex, f] * item_embedding[itemIndex, f]
+			
+			pred = ui_dot + global_bias + user_bias[userIndex, 0] + item_bias[itemIndex, 0]
+			predictions.append(pred)
+
+		#only user in train
+		elif user in users_d:
+			predictions.append(global_bias + user_bias[users_d[user], 0])
+
+		#only item in train
+		elif item in items_d:
+			predictions.append(global_bias + item_bias[items_d[item], 0])
+
+		#frozen
+		else:
+			predictions.append(global_bias)
+
+	print_predictions(test_tuple, predictions)
 	return
