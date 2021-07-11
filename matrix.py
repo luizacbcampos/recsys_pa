@@ -9,6 +9,7 @@ class Dados:
 	def __init__(self, df):
 		self.users = list(df['UserId'].unique())
 		self.items = list(df['ItemId'].unique())
+		
 		#dicionarios
 		self.users_dict = {self.users[i]: i for i in range(len(self.users))}
 		self.items_dict = {self.items[i]: i for i in range(len(self.items))}
@@ -20,7 +21,11 @@ class Dados:
 		self.mu = df['Prediction'].mean()
 		self.users_avg = df.groupby(by='UserId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
 		self.items_avg = df.groupby(by='ItemId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
-	
+
+		#Resultados
+		self.user_embedding = None
+		self.item_embedding = None
+
 	def get_users(self):
 		return self.users
 
@@ -55,10 +60,10 @@ class Dados:
 		return self.mu
 
 	def get_users_avg(self):
-		return self.users_avg[:,1]
+		return self.users_avg[:,1] - self.mu
 
 	def get_items_avg(self):
-		return self.items_avg[:,1]
+		return self.items_avg[:,1] - self.mu
 
 	def get_user_avg(self, u): #u is a NUMBER
 		return self.users_avg[u,1]
@@ -66,10 +71,10 @@ class Dados:
 	def get_item_avg(self, i): #i is a NUMBER
 		return self.items_avg[i,1]
 
-	def algo(self, u, k):
-		tuple_emb = list(filter(lambda x: x[0]==u, self.get_tuples()))
-		u_emb = [x[2] for x in tuple_emb]
-		return 0
+	def set_u_emb(self, user_emb):
+		self.user_embedding = user_emb
+	def set_i_emb(self, item_emb):
+		self.item_embedding = item_emb
 
 def targets(df):
 
@@ -121,8 +126,6 @@ def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000
 	user_embedding, item_embedding = create_embeddings(dados, k, random)
 	
 	global_bias, user_bias, item_bias = get_bias(dados)
-	
-	dele = np.random.random((dados.get_n_items(), k))/k
 
 	N = dados.get_N_tuples()
 
@@ -134,7 +137,8 @@ def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000
 			ui_dot = 0
 
 			for f in range(k):
-				ui_dot += user_embedding[userIndex,f]*item_features[itemIndex, f]
+				ui_dot += user_embedding[userIndex,f]*item_embedding[itemIndex, f]
+			
 			r_hat = ui_dot + global_bias + user_bias[userIndex,0] + item_bias[itemIndex, 0]
 			res = r - r_hat
 			user_bias[userIndex, 0] += learning_rate * (res - regularizer * user_bias[userIndex,0])
@@ -145,11 +149,27 @@ def set_enviromment(df, k=20, epochs=5, learning_rate=0.00001, regularizer=0.000
 			for f in range(k):
 				user_embedding[userIndex, f] = learning_rate * (res * item_embedding[itemIndex, f] - regularizer* user_embedding[userIndex, f])
 				item_embedding[itemIndex, f] = learning_rate * (res * user_embedding[userIndex, f] - regularizer* item_embedding[itemIndex, f])
+		
 		if verbose:
-                erro = erro / N
-                print("Epoch " + str(epoch) + ": Error: " + str(erro))
+			erro = np.sqrt(erro / N)
+			print("Epoch " + str(epoch) + ": Error: " + str(erro))
 	
 	for i in range(epochs):
+		start_time = time.time()
 		one_epoch(N, i, True)
+		print("--- %s : %s seconds ---" % (str(i), time.time() - start_time))
 
-	return 0
+	# Assign
+	dados.set_u_emb(user_embedding)
+	dados.set_i_emb(item_embedding)
+	return dados
+
+def predictions(in_, dados, verbose=False):
+	test_tuple = [(x[0],x[1]) for x in in_.to_records(index=False)]
+	pred = []
+	exit()
+	for i in range(len(test_tuple)):
+		user = test_tuple[i][0]
+		item = test_tuple[i][1]
+
+	return

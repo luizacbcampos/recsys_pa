@@ -31,19 +31,13 @@ def load_targets(targets_file):
 
 df = load_ratings(ratings_file)
 
-a = df.groupby(by='UserId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
-print(a[0,1])
-
 #'u0020931'
 
-m.set_enviromment(df, k=20, epochs=1, random=False)
-#dados = m.Dados(df)
-
-
-#print(dados.get_users())
-
+dados = m.set_enviromment(df, k=20, epochs=20, learning_rate=0.005, random=False)
+exit()
 t = load_targets(targets_file)
 
+m.predictions(t, dados, verbose=False)
 
 #m.create_utility_matrix(df)
 
