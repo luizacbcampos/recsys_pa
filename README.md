@@ -28,6 +28,13 @@ To minimize their RMSE we have:
 
 ## Links
 
+#### SVD
+1. [reco](https://github.com/mayukh18/reco)
+1. [Netflix Update: Try This at Home by Simon Funk](https://sifter.org/~simon/journal/20061211.html)
+1. [Recommender system: Using singular value decomposition as a matrix factorization approach by Robin Witte](https://robinwitte.com/wp-content/uploads/2019/10/RecommenderSystem.pdf)
+1. [Netflix Prize and SVD by Stephen Gower](http://buzzard.ups.edu/courses/2014spring/420projects/math420-UPS-spring-2014-gower-netflix-SVD.pdf)
+
+#### General
 1. [Formulas in Markdown](https://stackoverflow.com/questions/11256433/how-to-show-math-equations-in-general-githubs-markdownnot-githubs-blog)
 2. [Greek Letters Symbols](https://www.keynotesupport.com/internet/special-characters-greek-letters-symbols.shtml)
 3. [Other Punctuation](https://sites.psu.edu/symbolcodes/codehtml/#math)

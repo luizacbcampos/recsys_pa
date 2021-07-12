@@ -36,7 +36,7 @@ def load_targets(targets_file):
 df = load_ratings(ratings_file)
 
 
-set_up = m.setup(k=15, epochs=13, l_rt=0.009, reg=0.1, random=False, verbose=True)
+set_up = m.setup(k=15, epochs=25, l_rt=0.005, reg=0.1, random=False, verbose=True)
 dados = m.set_enviromment(df, set_up)
 
 t = load_targets(targets_file)
