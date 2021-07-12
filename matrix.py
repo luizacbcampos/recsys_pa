@@ -1,4 +1,4 @@
-import time
+#import time
 import numpy as np
 import pandas as pd
 
@@ -19,9 +19,11 @@ class Dados:
 		#info
 		# np.array [count, mean]
 		self.mu = df['Prediction'].mean()
+		'''
+		Did not work out
 		self.users_avg = df.groupby(by='UserId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
 		self.items_avg = df.groupby(by='ItemId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
-
+		'''
 		#Resultados
 		self.user_embedding = None
 		self.item_embedding = None
@@ -55,12 +57,14 @@ class Dados:
 	def get_mu(self):
 		return self.mu
 
+	'''
+		Removido
 	def get_users_avg(self):
 		return self.users_avg[:,1] - self.mu
 
 	def get_items_avg(self):
 		return self.items_avg[:,1] - self.mu
-
+	'''
 	def set_u_emb(self, user_emb):
 		self.user_embedding = user_emb
 
@@ -80,8 +84,8 @@ class Dados:
 		return self.user_bias, self.item_bias
 
 	def cleanup_results(self):
-		del self.users_avg
-		del self.items_avg
+		#del self.users_avg
+		#del self.items_avg
 		del self.tuples
 
 class setup(object):
@@ -122,8 +126,8 @@ def create_embeddings(dados, k, random=False):
 		Aqui há duas opções: Ones ou Random. Default é ones
 	'''
 	def set_with_ones():
-		user_embedding = np.ones((dados.get_n_users(), k))
-		item_embedding = np.ones((dados.get_n_items(), k))
+		user_embedding = np.ones((dados.get_n_users(), k))/k
+		item_embedding = np.ones((dados.get_n_items(), k))/k
 		return user_embedding, item_embedding
 	
 	def set_with_random():
@@ -154,11 +158,10 @@ def set_enviromment(df, set_up):
 	dados_tuples = dados.get_tuples()
 	
 	if verbose:
-		print("Running model with {} epochs k = {}, l_rt = {} and reg = {}".format(epochs, k, learning_rate, regularizer))
+		print("Running model with {} epochs k = {}, l_rt = {}, reg = {} and rand = {}".format(epochs, k, learning_rate, regularizer, random))
 
 	def one_epoch(N, epoch=0, verbose=False):
 		erro = 0
-
 		for userIndex, itemIndex, r in dados_tuples:
 			
 			ui_dot = 0
@@ -168,10 +171,11 @@ def set_enviromment(df, set_up):
 			
 			r_hat = ui_dot + global_bias + user_bias[userIndex,0] + item_bias[itemIndex, 0]
 			res = r - r_hat
+			
 			user_bias[userIndex, 0] += learning_rate * (res - regularizer * user_bias[userIndex,0])
 			item_bias[itemIndex, 0] += learning_rate * (res - regularizer * item_bias[itemIndex,0])
 
-			erro += res**2
+			erro = erro + res**2
 
 			for f in range(k):
 				#ATENÇÃO MUDEI AQUI: COLOQUEI O 2*L_RT
