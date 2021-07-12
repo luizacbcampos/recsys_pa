@@ -224,7 +224,7 @@ def get_predictions(in_, dados, set_up):
 
 	#get the matrixes
 	user_embedding, item_embedding = dados.get_embeddings()
-	#exit()
+	
 	for i in range(len(test_tuple)):
 		user = test_tuple[i][0]
 		item = test_tuple[i][1]
