@@ -1,5 +1,35 @@
 # Recommender Systems PA1
 
+## Overview
+
+### Description
+
+The goal of this assignment is to implement a personalized collaborative movie recommender using either a memory-based or a model-based approach. As discussed in class, various implementation choices impact the quality of collaborative recommendations, including choices for data normalization, similarity computation, neighborhood selection, rating aggregation, and dimensionality reduction. As part of this assignment, you should try different instantiations of the aforementioned components, and verify the resulting recommendation performance of your implementation by submitting your produced recommendations to [Kaggle](https://www.kaggle.com/t/5fa9c6785e544f7faaaddcc9c6faf554).
+
+### Evaluation
+
+The evaluation metric for this assignment is Root Mean Squared Error (RMSE). The RMSE score, commonly used in the recommender systems literature, measures accuracy by penalizing prediction errors.
+
+## Data
+
+As stated in the specification document for this assignment, your implementation should be executed using the following command:
+
+``` $ python3 main.py ratings.csv targets.csv > submission.csv ```
+
+### File descriptions
+
+You will need the following CSV files:
+
+1. `ratings.csv`, containing historical ratings for 336,672 *<user, item>* pairs
+2. `targets.csv`, containing the 77,276 *<user, item>* pairs for prediction
+
+In addition, a sample `submission-rand.csv` file (with randomly assigned predictions) is provided for your convenience.
+
+Note that each of these files contains a header line.
+
+---
+
+
 ## Formulas
 The matrix factorization in SVD is given by:
 
