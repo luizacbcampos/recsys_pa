@@ -6,8 +6,9 @@ import pandas as pd
 
 #meus
 #import matrix as m
-from read_content import load_content
 
+from read_content import load_content
+from content_func import pass_this
 
 #from timer import time_a_function, compare_functions
 #from functools import partial
@@ -55,8 +56,9 @@ def load_targets(targets_file):
 
 
 df = load_ratings(ratings_file)
-content_dict = load_content(content_file, verbose=True)
 
+#content_dict = load_content(content_file)
+#pass_this(content_dict)
 
 '''
 set_up = m.setup(k=20, epochs=10, l_rt=0.009, reg=0.1, random=False, verbose=False)

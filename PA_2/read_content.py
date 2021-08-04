@@ -87,24 +87,23 @@ def convert_to_minutes(json_dicio):
 	'''
 		Fixes the 'Runtime'
 	'''
-	if pd.notnull(json_dicio['Runtime']):
-		l = json_dicio['Runtime'].split('h')
-		if len(l) == 2:
-			hour = int(l[0])
-			minute = int(l[1].split(' ')[1])
-			json_dicio['Runtime'] = hour*60 + minute
-		else:
-			minute = int(l[0].split(' ')[0])
-			json_dicio['Runtime'] = minute
+	l = json_dicio['Runtime'].split('h')
+	if len(l) == 2:
+		hour = int(l[0])
+		minute = int(l[1].split(' ')[1])
+		json_dicio['Runtime'] = hour*60 + minute
+	else:
+		minute = int(l[0].split(' ')[0])
+		json_dicio['Runtime'] = minute
 	return json_dicio
 
 def released_to_datetime(json_dicio):
 	'''
 		Converts string to datetime
 	'''
-	if pd.notnull(json_dicio['Released']):
-		json_dicio['Released'] = datetime.strptime(json_dicio['Released'], '%d %b %Y')
-		#datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
+	# i check if it's not null before
+	json_dicio['Released'] = datetime.strptime(json_dicio['Released'], '%d %b %Y')
+	#datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
 	return json_dicio
 
 def age_rating(json_dicio):
@@ -121,20 +120,39 @@ def convert_to_number(json_dicio, col='imdbRating', numeric_type=float):
 	'''
 		Converts a category to numeric. Float is default
 	'''
-	if pd.notnull(json_dicio[col]):
-		json_dicio[col] = numeric_type(json_dicio[col])
+	# i check if it's not null before
+	json_dicio[col] = numeric_type(json_dicio[col])
 	return json_dicio
 
-def split_to_list(json_dicio, col='Genre', sep=","):
+def split_to_list(json_dicio, col='Genre', sep=", "):
 	'''
 		Converts a category to list.
 	'''
-	if pd.notnull(json_dicio[col]):
-		json_dicio[col] = json_dicio[col].split(sep)
+	# i check if it's not null before
+	json_dicio[col] = json_dicio[col].split(sep)
 	return json_dicio
 
-def awards_split(json_dicio, col='Awards'):
+def writers_split(json_dicio, sep=", "):
+	'''
+		Converts the writer's column
+	'''
 	
+	writers_list = json_dicio['Writer'].split(sep)
+	w = {'name': list(), 'function':list()}
+	for writer in writers_list:
+		first, last = writer.find(" ("), writer.find(")")
+		person = writer if first == -1 else writer[0:first]
+		function = 'writer' if first==-1 else writer[first+2:last]
+		w['name'].append(person)
+		w['function'].append(function.lower())
+
+	json_dicio['Writer'] = w
+	return json_dicio
+
+def awards_split(json_dicio):
+	'''
+		Converts the awards column
+	'''
 	def replace_for_value(lista):
 		if len(lista) == 0:
 			return 0
@@ -152,9 +170,6 @@ def awards_split(json_dicio, col='Awards'):
 
 	def specific_awards(lista, dicio):
 		
-		replacement_dict = {'BAFTA Film Award': 'BAFTA', 'BAFTA Film Awards': 'BAFTA', 'Golden Globe':'Golden Globe',
-		'Golden Globes':'Golden Globe', 'Oscar':'Oscar', 'Oscars':'Oscar', 'Primetime Emmy':'Emmy', 'Primetime Emmys':'Emmy'}
-
 		if len(lista) == 0:
 			return dicio
 
@@ -166,27 +181,16 @@ def awards_split(json_dicio, col='Awards'):
 		
 		dicio = update(dicio, entry=noms, entry_name='nomination')
 		dicio = update(dicio, entry=wins, entry_name='win')
-		'''
-		if type(noms) == list:
-			dicio[replacement_dict[noms[1]]] = {'nomination': int(noms[0])}
-			dicio['nomination'] += int(noms[0])
-		if type(wins) == list:
-			dicio[replacement_dict[wins[1]]] = {'win': int(wins[0])}
-			dicio['win'] += int(wins[0])
-		'''
 		return dicio
 
-	if pd.notnull(json_dicio[col]):
-
-		result = {}
-		result['win'] = replace_for_value(re.findall(r'[\d]+ win[s]*', json_dicio[col]))
-		result['nomination'] = replace_for_value(re.findall(r'[\d]+ nomination[s]*', json_dicio[col]))
-
-		#the_split = re.findall(r'.+\. ', json_dicio[col])
-		result = specific_awards(json_dicio[col].split('.', 1), result)
-		json_dicio[col] = result
+	# i check if it's not null before
+	result = {}
+	result['win'] = replace_for_value(re.findall(r'[\d]+ win[s]*', json_dicio['Awards']))
+	result['nomination'] = replace_for_value(re.findall(r'[\d]+ nomination[s]*', json_dicio['Awards']))
+	json_dicio['Awards'] = specific_awards(json_dicio['Awards'].split('.', 1), result)
 
 	return json_dicio
+
 
 def data_cleaning(json_dicio, columns_keep, drop_list=None):
 	'''
@@ -194,54 +198,57 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 	'''
 	json_dicio = drop_columns(json_dicio, drop_list)
 	json_dicio = replace_str(json_dicio)
- 
+	
 	for col in columns_keep:
-		if col == 'Runtime':
-			json_dicio = convert_to_minutes(json_dicio)
+		if pd.notnull(json_dicio[col]):
+			if col == 'Runtime':
+				json_dicio = convert_to_minutes(json_dicio)
 
-		elif col == 'Rated':
-			json_dicio = age_rating(json_dicio)
+			elif col == 'Rated':
+				json_dicio = age_rating(json_dicio)
 
-		elif col == 'imdbRating':
-			json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
+			elif col == 'imdbRating':
+				json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
 
-		elif col == 'Year':
-			json_dicio = convert_to_number(json_dicio, col, numeric_type=int)
+			elif col == 'Year':
+				json_dicio = convert_to_number(json_dicio, col, numeric_type=int)
 
-		elif col == 'imdbVotes':
-			if pd.notnull(json_dicio[col]):
+			elif col == 'imdbVotes':
 				json_dicio[col] = int(json_dicio[col].replace(",", ""))
 
-		elif col == 'Genre':
-			json_dicio = split_to_list(json_dicio, col, sep=",")
+			elif col == 'Genre':
+				json_dicio = split_to_list(json_dicio, col)
 
-		elif col == 'Director':
-			json_dicio = split_to_list(json_dicio, col, sep=",")
+			elif col == 'Director':
+				json_dicio = split_to_list(json_dicio, col)
 
-		elif col == 'Language':
-			json_dicio = split_to_list(json_dicio, col)
+			elif col == 'Language':
+				json_dicio[col] = json_dicio[col].replace("Norse,  Old", "Old Norse") #corrects a mistake
+				json_dicio = split_to_list(json_dicio, col)
+				#pass
+			elif col == 'Country':
+				json_dicio = split_to_list(json_dicio, col)
 
-		elif col == 'Country':
-			json_dicio = split_to_list(json_dicio, col)
+			elif col == 'Actors':
+				json_dicio = split_to_list(json_dicio, col)
 
-		elif col == 'Actors':
-			json_dicio = split_to_list(json_dicio, col)
+			elif col == 'Writer':
+				#json_dicio = split_to_list(json_dicio, col) #look after
+				json_dicio = writers_split(json_dicio, sep=", ")
+			elif col == 'Awards':
+				json_dicio = awards_split(json_dicio)
 
-		elif col == 'Writer':
-			json_dicio = split_to_list(json_dicio, col)
-
-		elif col == 'Awards':
-			json_dicio = awards_split(json_dicio, col)
-
-		elif col == 'Released':
-			json_dicio = released_to_datetime(json_dicio)
-			#pass
+			elif col == 'Released':
+				json_dicio = released_to_datetime(json_dicio)
+				#pass
 			
 		#print(col)
 	return json_dicio
 
-def load_content(content_file="content.csv", drop_list=None, pandas=False, verbose=False):
-
+def load_content(content_file="content.csv", drop_list=None):
+	'''
+		Loads the csv
+	'''
 	def make_list_dict(content_file):
 		
 		dicio_list = [] 
@@ -255,37 +262,42 @@ def load_content(content_file="content.csv", drop_list=None, pandas=False, verbo
 			json_dicio = {**y, **{'ItemId': itemId}}
 			json_dicio.update(literal_eval(json_string))
 			#modifications
-			json_dicio = data_cleaning(json_dicio, columns_keep)
+			json_dicio = data_cleaning(json_dicio, columns_keep, drop_list)
 			dicio_list.append(json_dicio)
 
 		f.close()
 		return dicio_list
 
-	
-	content_dict = make_list_dict(content_file)
+	return make_list_dict(content_file)
+
+
+def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False):
+
+	content_dict = load_content(content_file, drop_list)
 	
 	if verbose:
 		dicio_type_check(content_dict, row=128)
 
 	if pandas:
-		df = pd.DataFrame.from_records(content_dict, exclude=['Genre','Director','Writer','Actors','Language','Country'])
-		#exit()
-		print(df['Awards'].value_counts())
+		df = pd.DataFrame.from_records(content_dict, exclude=['Genre','Director','Writer','Actors','Language', 'Country', 'Awards'])
+		print(df['Title'].value_counts())
 		print(df.columns)
-		#print_full(df['Plot'].value_counts())
-		print(df)
+
+		#print(df.loc[df['Writer'] == 'Anders Nyberg, Ola Olsson, Carin Pollak, Kay Pollak, Margaretha Pollak'])
+		#print_full(df['Director'].value_counts())
+		#print(df)
 		print(df.dtypes)
-
 	return content_dict
-
 
 if __name__ == '__main__':
 	
-	content_file = "content.csv"
-
-	load_content(content_file, verbose=True)
-
 	from functools import partial
 	from timer import time_a_function, compare_functions
+	
+	content_file = "content.csv"
+
+	drops = ['Response', 'Error', 'Type', 'Poster', 'Episode', 'Season', 'seriesID', 'Metascore', 'imdbID']
+	main(content_file, drops, pandas=True, verbose=True)
+
 
 	#compare_functions(partial(load_content, content_file), partial(load_content, content_file, on_dict=False), 10)

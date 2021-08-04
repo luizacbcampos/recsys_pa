@@ -50,7 +50,31 @@ To be eligible for the performance grades, you must satisfy the following:
 2. The source code that you submit (via Moodle) by the deadline should be able to precisely generate your last submission to Kaggle;
 3. Your implementation should be able to execute correctly in a Linux environment under 5 minutes.
 
-
 ---
 
+## Content-based Recommendation
+
+### Description of the Content
+In this approach, the user is suggested an item based on the description of the item.
+
+**Term Frequency-Inverse Document Frequency(TF-IDF)** TF-IDF is used in Information Retrieval for feature extraction purposes and it is a sub-area of Natural Language Processing(NLP). 
+
+- _Term Frequency_: frequency of the word in the current document to the total number of words in the document. It signifies the occurrence of the word in a document and gives higher weight when the frequency is more so it is divided by document length to normalize.
+  - ![\Large tf](https://latex.codecogs.com/svg.latex?TF%28f%29%20%3D%20%5Cfrac%7B%5Ctext%7BFrequency%20occurance%20of%20term%20t%20in%20document%7D%7D%7B%5Ctext%7BTotal%20number%20of%20terms%20in%20document%7D%7D)
+  - TF<sub>ti</sub>: term frequency of term _t_ in item _i_;
+  
+- _Inverse Document Frequency_: total number of documents to the frequency occurrence of documents containing the word. It signifies the rarity of the word. It helps in giving a higher score to rare terms in the documents. 
+  - ![\Large idf](https://latex.codecogs.com/svg.latex?IDF%28t%29%20%3D%20%5Clog%20%5Cleft%20%28%20%5Cfrac%7B%5Ctext%7BTotal%20number%20of%20documents%7D%7D%7B%5Ctext%7BNumber%20of%20documents%20containing%20term%20t%7D%7D%20%5Cright%20%29)
+  - idf<sub>t</sub>: inverse document frequency of term _t_;
+
+__TF\*IDF__: weight given to each term.
+
+
+
 ## Links
+
+1. [Beginners Guide to learn about Content Based Recommender Engines](https://www.analyticsvidhya.com/blog/2015/08/beginners-guide-learn-content-based-recommender-systems/)
+1. [Introduction to TWO approaches of Content-based Recommendation System](https://towardsdatascience.com/introduction-to-two-approaches-of-content-based-recommendation-system-fc797460c18c)
+1. [Content-Based Recommendation System](https://medium.com/@bindhubalu/content-based-recommender-system-4db1b3de03e7)
+1. [Content-based Recommender Systems: State of the Art and Trends](https://www.researchgate.net/publication/226098747_Content-based_Recommender_Systems_State_of_the_Art_and_Trends)
+1. [Content-based Recommender System for Movie Website](https://www.diva-portal.org/smash/get/diva2:935353/FULLTEXT02.pdf)
