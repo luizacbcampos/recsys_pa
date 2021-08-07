@@ -1,7 +1,11 @@
 import unittest, re
-import sys 
-sys.path.append('../')
-from snowball_stemmer import *
+
+import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from parentdir.snowball_stemmer import *
 
 
 class TestPorter2(unittest.TestCase):

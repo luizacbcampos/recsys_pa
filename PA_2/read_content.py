@@ -88,8 +88,12 @@ def replace_null(some_dict, string=r'^N/A$', replace=np.nan):
 	for column, value in some_dict.items():
 		if column == 'Plot' or column == 'Title':
 			some_dict[column] = '' if re.match(string,value) else value
+		
 		elif column == 'Genre' or column == 'Director' or column == 'Language' or column == 'Country' or column == 'Actors':
 			some_dict[column] = '' if re.match(string,value) else value
+		
+		elif column == 'imdbVotes' or column == 'imdbRating':
+			some_dict[column] = '0' if re.match(string,value) else value		
 		else:
 			some_dict[column] = replace if re.match(string,value) else value
 	return some_dict
@@ -230,6 +234,12 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 		elif col == 'Actors':
 			json_dicio = split_to_list(json_dicio, col)
 
+		elif col == 'imdbRating':
+			json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
+
+		elif col == 'imdbVotes':
+			json_dicio[col] = int(json_dicio[col].replace(",", ""))
+
 		elif pd.notnull(json_dicio[col]):
 			if col == 'Runtime':
 				json_dicio = convert_to_minutes(json_dicio)
@@ -237,14 +247,8 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 			elif col == 'Rated':
 				json_dicio = age_rating(json_dicio)
 
-			elif col == 'imdbRating':
-				json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
-
 			elif col == 'Year':
 				json_dicio = convert_to_number(json_dicio, col, numeric_type=int)
-
-			elif col == 'imdbVotes':
-				json_dicio[col] = int(json_dicio[col].replace(",", ""))
 
 			elif col == 'Writer':
 				json_dicio = writers_split(json_dicio, sep=", ")
@@ -293,14 +297,19 @@ def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False
 		dicio_type_check(content_dict, row=128)
 
 	if pandas:
-		df = pd.DataFrame.from_records(content_dict, exclude=['Genre','Writer','Actors','Language', 'Country', 'Awards'])
-		print(df['Director'].value_counts())
+		df = pd.DataFrame.from_records(content_dict, exclude=['Director','Writer','Actors','Language', 'Country', 'Awards'])
+		
+		print(df['Genre'].value_counts())
 		print(df.columns)
-
-		#print(df.loc[df['Writer'] == 'Anders Nyberg, Ola Olsson, Carin Pollak, Kay Pollak, Margaretha Pollak'])
-		#print_full(df['Director'].value_counts())
 		#print(df)
-		print(df.dtypes)
+
+		df = df.explode('Genre')
+		print(df.groupby(['Genre']).sum()[['imdbRating', 'imdbVotes']])
+		
+		#print('imdbRating', df['imdbRating'].sum())
+		#print('imdbVotes', df['imdbVotes'].sum())
+		#print(df.sort_values(by=['imdbRating'], na_position='first')['imdbRating'].drop_duplicates())
+		#rint(df.dtypes)
 	return content_dict
 
 if __name__ == '__main__':
@@ -312,6 +321,5 @@ if __name__ == '__main__':
 
 	drops = ['Response', 'Error', 'Type', 'Poster', 'Episode', 'Season', 'seriesID', 'Metascore', 'imdbID']
 	main(content_file, drops, pandas=True, verbose=True)
-
 
 	#compare_functions(partial(load_content, content_file), partial(load_content, content_file, on_dict=False), 10)

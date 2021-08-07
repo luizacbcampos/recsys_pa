@@ -1,31 +1,46 @@
 import re
+import numpy as np
+import unicodedata
+#mine
 from num2word import num2words
 from snowball_stemmer import Stemmer
 
-def tokenize(target_string):
+def tokenize(target_string, pattern=r"[\w]+\'[\w]+|[\w]+\-[\w]+|[\w]+"):
 	'''
-		Tokenizes a string
+		Tokenizes a string. Simple pattern: r"[\w']+"
 	'''
-	#word_list = re.findall(r"[\w']+", target_string)
-	word_list = re.findall(r"[\w]+\'[\w]+|[\w]+\-[\w]+|[\w]+", target_string)
+	word_list = re.findall(pattern, target_string)
 	return word_list
 
-def tokenization(target_string, lower_=True, number=True):
+def strip_accents(s):
+	return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+def number_conversion(target_string):
+	'''
+		Converts numbers to words. Simple pattern: "r'[\d]+"
+	'''
+	cardinal_pattern = r'([\d]+\.[\d]|[\d]+)(?![\w])'
+	ordinal_pattern = r'([\d]*1[ ]*st|[\d]*2[ ]*nd|[\d]*3[ ]*rd|[\d]*3[ ]*rd|[\d]+[ ]*th)(?![\w])'
+
+	target_string = re.sub(cardinal_pattern, lambda m: num2words(m.group(), to='cardinal'), target_string)
+	target_string = re.sub(ordinal_pattern, lambda m: num2words(re.match(r'[\d]+',m.group()).group(), ordinal=True, to='ordinal'), target_string)
+	return target_string
+
+def tokenization(target_string, lower_=True, number=True, accents=True):
 	'''
 		String tokenization
 		lower_: lowers string
 		number: converts number to text
-		apostrophe: removes apostrophe
+		accents: replaces accented characters
 	'''
 	if lower_:
 		target_string = target_string.lower()		
 
 	if number:
-		cardinal_pattern = r'([\d]+\.[\d]|[\d]+)(?![\w])'
-		ordinal_pattern = r'([\d]*1[ ]*st|[\d]*2[ ]*nd|[\d]*3[ ]*rd|[\d]*3[ ]*rd|[\d]+[ ]*th)(?![\w])'
-		#target_string = re.sub(r'[\d]+', lambda m: num2words(m.group(), to='cardinal'), target_string)
-		target_string = re.sub(cardinal_pattern, lambda m: num2words(m.group(), to='cardinal'), target_string)
-		target_string = re.sub(ordinal_pattern, lambda m: num2words(re.match(r'[\d]+',m.group()).group(), ordinal=True, to='ordinal'), target_string)
+		target_string = number_conversion(target_string)
+	
+	if accents:
+		target_string = strip_accents(target_string)
 
 	word_list = tokenize(target_string)
 	return word_list
@@ -57,11 +72,11 @@ def remove_apostrophe(tokens):
 		tokens[i] = tokens[i].replace("'", "")
 	return tokens
 
-def tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=True, stemmer=None):
+def tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=True, stemmer=None, accents=True):
 	'''
 		Returns the plot tokenized in list format
 	'''
-	word_list = tokenization(plot, lower_, number)
+	word_list = tokenization(plot, lower_, number, accents)
 	
 	if punctuation:
 		word_list = remove_punctuation(word_list)
@@ -77,11 +92,11 @@ def tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=T
 	
 	return tokens
 
-def set_tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=True, stemmer=None):
+def set_tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=True, stemmer=None, accents=True):
 	'''
 		Returns the plot tokenized in set format
 	'''
-	word_list = set(tokenization(plot, lower_, number))
+	word_list = set(tokenization(plot, lower_, number, accents))
 
 	if punctuation:
 		word_list = remove_punctuation(word_list)
@@ -98,17 +113,17 @@ def set_tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuati
 	return set(tokens)
 
 
-def create_word_set(json_dicio, lower_=True, number=True, apostrophe=True, punctuation=True, stem='snowball'):
+def create_word_set(json_dicio, lower_=True, number=True, apostrophe=True, punctuation=True, stem='snowball', accents=True):
 	'''
 		Creates a set with every word on the plots
 	'''
 	wordSet = set()
 	for dicio in json_dicio:
-		tokens = set_tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation)
+		tokens = set_tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, accents)
 		wordSet = wordSet.union(tokens)
 	return wordSet
 
-def create_word_set_and_dict(json_dicio, lower_=True, number=True, apostrophe=True, punctuation=True, stem='snowball'):
+def create_word_set_and_dict(json_dicio, lower_=True, number=True, apostrophe=True, punctuation=True, stem='snowball', accents=True):
 	'''
 		Creates a set with every word on the plots. Creates a dict with each ItemId's tokens
 	'''
@@ -121,7 +136,7 @@ def create_word_set_and_dict(json_dicio, lower_=True, number=True, apostrophe=Tr
 		stemmer = None
 
 	for dicio in json_dicio:
-		tokens = tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, stemmer)
+		tokens = tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, stemmer, accents)
 		wordSet = wordSet.union(set(tokens))
 		token_dict[dicio['ItemId']] = tokens
 	
@@ -144,28 +159,43 @@ def make_ItemId_wordDict(wordSet, tokens):
 
 
 def computeTF(wordSet, tokens):
-    tfDict = {}
-    tokensCount = len(tokens)
-    wordDict = make_ItemId_wordDict(wordSet, tokens)
-    for word, count in wordDict.items():
-        tfDict[word] = count/float(tokensCount)
-    return tfDict
+	'''
+		Computes term frequency
+	'''
+	tfDict = {}
+	tokensCount = len(tokens)
+	wordDict = make_ItemId_wordDict(wordSet, tokens)
+	for word, count in wordDict.items():
+		tfDict[word] = count/float(tokensCount)
+	return tfDict
 
 
 def computeIDF(wordSet, token_dict):
+	'''
+		Computes Inverse Document Frequency
+	'''
  
-    N = len(token_dict)
-    idfDict = make_wordSetDict(wordSet)
+	N = len(token_dict)
+	idfDict = make_wordSetDict(wordSet)
 
-    for itemId, tokens in token_dict.items():
-    	for word in set(tokens):
-    		idfDict[word] += 1
-    
-    for word, val in idfDict.items():
-        idfDict[word] = np.log10(N / float(val))
-        
-    return idfDict
+	for itemId, tokens in token_dict.items():
+		for word in set(tokens):
+			idfDict[word] += 1
 
+	for word, val in idfDict.items():
+	    idfDict[word] = np.log10(N / float(val))
+	    
+	return idfDict
+
+def computeTFIDF(wordSet, tokens, idfDict):
+	
+	tfidf = {}
+	tfbow = computeTF(wordSet, tokens)
+	for word, val in tfbow.items():
+		tfidf[word] = val*idfDict[word]
+	return tfidf
+
+	
 
 if __name__ == '__main__':
 	
@@ -174,11 +204,9 @@ if __name__ == '__main__':
 	#word_list = re.split(r"\s+", target_string)
 	print(tokenize(target_string))
 	print(not_stop_words(tokenize(target_string)))
-	
-
-	math='<m>3+5</m>'
-	print(re.sub(r'<(.)>(\d+?)\+(\d+?)</\1>', lambda m: str(int(m.group(2)) + int(m.group(3))), math))
 
 	print(re.sub(r'[\d]+', lambda m: num2words(m.group(), to='cardinal'), target_string))
 	print(re.sub(r'([\d]+\.[\d]|[\d]+)(?![\w])', lambda m: num2words(m.group(), to='cardinal'), target_string))
 	print(re.sub(r'([\d]*1[ ]*st|[\d]*2[ ]*nd|[\d]*3[ ]*rd|[\d]*3[ ]*rd|[\d]+[ ]*th)(?![\w])', lambda m: num2words(re.match(r'[\d]+',m.group()).group(), ordinal=True, to='ordinal'), target_string))
+
+	print(strip_accents('"Montréal, über, 12.89, Mère, Françoise, noël, 889"'))

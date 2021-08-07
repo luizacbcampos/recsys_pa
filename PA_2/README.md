@@ -61,6 +61,7 @@ In this approach, the user is suggested an item based on the description of the 
 1. Lower the string
 1. Transforms numbers to words using [num2words](https://github.com/savoirfairelinux/num2words)
 1. Stemming with Porter Stemmer or Snowball Stemmer (Porter2)
+1. Accent stripping: replace é, über, Mère 
 
 **Term Frequency-Inverse Document Frequency(TF-IDF)** TF-IDF is used in Information Retrieval for feature extraction purposes and it is a sub-area of Natural Language Processing(NLP). 
 

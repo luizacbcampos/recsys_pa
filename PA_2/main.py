@@ -9,7 +9,7 @@ import pandas as pd
 
 from read_content import load_content
 from content_func import pass_this
-from tokenizer import create_word_set_and_dict, computeTF, computeIDF
+from tokenizer import create_word_set_and_dict, computeTF, computeIDF, computeTFIDF
 
 from timer import time_a_function, compare_many_functions
 from functools import partial
@@ -67,34 +67,25 @@ def load_targets(targets_file):
 df = load_ratings(ratings_file)
 content_dict = load_content(content_file)
 
+'''
 print("lower_=True, number=True")
 wordSet, token_dict = create_word_set_and_dict(content_dict, lower_=True, number=True)
 print(len(wordSet))
 #print_list(wordSet)
+idfDict = computeIDF(wordSet, token_dict)
+tfidf = computeTFIDF(wordSet, token_dict['i4696222'], idfDict)
 
-
-A = computeTF(wordSet, token_dict['i4967094'])
-B = computeTF(wordSet, token_dict['i4696222'])
-print(non_zero_dict(A))
-print(non_zero_dict(B))
-
-
-print(computeIDF(wordSet, token_dict))
-
-
-
-
+#print(non_zero_dict(tfidf))
+'''
 
 
 '''
-compare_many_functions([partial(create_word_set,content_dict, lower_=False, number=False), partial(create_word_set,content_dict, lower_=True, number=False),
-partial(create_word_set,content_dict, lower_=False, number=True), partial(create_word_set,content_dict, lower_=True, number=True)], 10)
+compare_many_functions([partial(create_word_set,content_dict), partial(create_word_set,content_dict, lower_=True, number=False)], 10)
 '''
 
-#time_a_function(create_word_set, content_dict)
 
 
-#pass_this(content_dict)
+pass_this(content_dict)
 
 '''
 set_up = m.setup(k=20, epochs=10, l_rt=0.009, reg=0.1, random=False, verbose=False)
