@@ -2,6 +2,23 @@ import numpy as np
 
 #my imports
 import tokenizer
+from tokenizer import create_word_set
+
+
+class Content(object):
+	'''
+		Content setting class
+	'''
+	def __init__(self, content_dict):
+		self.content_dict = content_dict
+		self.wordSet = create_word_set(content_dict)
+
+
+
+
+# ---------- Similarity calculations -----
+
+
 
 def cossine_similarity(a=[3, 45, 7, 2], b=[2, 54, 13, 15]):
 	#if its not

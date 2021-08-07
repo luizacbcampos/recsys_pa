@@ -9,9 +9,10 @@ import pandas as pd
 
 from read_content import load_content
 from content_func import pass_this
+from tokenizer import create_word_set_and_dict, computeTF, computeIDF
 
-#from timer import time_a_function, compare_functions
-#from functools import partial
+from timer import time_a_function, compare_many_functions
+from functools import partial
 
 
 
@@ -24,7 +25,6 @@ if len(sys.argv) > 3:
 	targets_file = sys.argv[2]
 	content_file = sys.argv[3]
 
-
 #---------------- Auxiliary functions ----------------------
 
 def print_full(x):
@@ -35,6 +35,15 @@ def print_full(x):
 	print(x)
 	pd.reset_option('display.max_rows')
 
+def print_list(lista):
+	'''
+		Prints full list
+	'''
+	for w in lista:
+		print(w)
+
+def non_zero_dict(dicio):
+	return {k: v for k, v in dicio.items() if v != 0}
 
 def load_ratings(ratings_file):
 	'''
@@ -56,8 +65,35 @@ def load_targets(targets_file):
 
 
 df = load_ratings(ratings_file)
+content_dict = load_content(content_file)
 
-#content_dict = load_content(content_file)
+print("lower_=True, number=True")
+wordSet, token_dict = create_word_set_and_dict(content_dict, lower_=True, number=True)
+print(len(wordSet))
+#print_list(wordSet)
+
+
+A = computeTF(wordSet, token_dict['i4967094'])
+B = computeTF(wordSet, token_dict['i4696222'])
+print(non_zero_dict(A))
+print(non_zero_dict(B))
+
+
+print(computeIDF(wordSet, token_dict))
+
+
+
+
+
+
+'''
+compare_many_functions([partial(create_word_set,content_dict, lower_=False, number=False), partial(create_word_set,content_dict, lower_=True, number=False),
+partial(create_word_set,content_dict, lower_=False, number=True), partial(create_word_set,content_dict, lower_=True, number=True)], 10)
+'''
+
+#time_a_function(create_word_set, content_dict)
+
+
 #pass_this(content_dict)
 
 '''
@@ -66,12 +102,4 @@ dados = m.set_enviromment(df, set_up)
 
 t = load_targets(targets_file)
 m.get_predictions(t, dados, set_up)
-'''
-
-'''
-start_time = time.time()
-df = load_targets(targets_file)
-print("--- %s seconds ---" % (time.time() - start_time))
-print(df)
-
 '''

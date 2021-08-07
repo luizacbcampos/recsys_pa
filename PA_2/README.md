@@ -57,6 +57,11 @@ To be eligible for the performance grades, you must satisfy the following:
 ### Description of the Content
 In this approach, the user is suggested an item based on the description of the item.
 
+**Tokenization**
+1. Lower the string
+1. Transforms numbers to words using [num2words](https://github.com/savoirfairelinux/num2words)
+1. Stemming with Porter Stemmer or Snowball Stemmer (Porter2)
+
 **Term Frequency-Inverse Document Frequency(TF-IDF)** TF-IDF is used in Information Retrieval for feature extraction purposes and it is a sub-area of Natural Language Processing(NLP). 
 
 - _Term Frequency_: frequency of the word in the current document to the total number of words in the document. It signifies the occurrence of the word in a document and gives higher weight when the frequency is more so it is divided by document length to normalize.
@@ -78,3 +83,4 @@ __TF\*IDF__: weight given to each term.
 1. [Content-Based Recommendation System](https://medium.com/@bindhubalu/content-based-recommender-system-4db1b3de03e7)
 1. [Content-based Recommender Systems: State of the Art and Trends](https://www.researchgate.net/publication/226098747_Content-based_Recommender_Systems_State_of_the_Art_and_Trends)
 1. [Content-based Recommender System for Movie Website](https://www.diva-portal.org/smash/get/diva2:935353/FULLTEXT02.pdf)
+1. [Porter Stemmer](https://tartarus.org/martin/PorterStemmer/)

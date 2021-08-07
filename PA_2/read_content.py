@@ -83,6 +83,17 @@ def replace_str(some_dict, string=r'^N/A$', replace=np.nan):
 	'''
 	return { k: (replace if re.match(string,v) else v) for k, v in some_dict.items() }
 
+def replace_null(some_dict, string=r'^N/A$', replace=np.nan):
+	
+	for column, value in some_dict.items():
+		if column == 'Plot' or column == 'Title':
+			some_dict[column] = '' if re.match(string,value) else value
+		elif column == 'Genre' or column == 'Director' or column == 'Language' or column == 'Country' or column == 'Actors':
+			some_dict[column] = '' if re.match(string,value) else value
+		else:
+			some_dict[column] = replace if re.match(string,value) else value
+	return some_dict
+
 def convert_to_minutes(json_dicio):
 	'''
 		Fixes the 'Runtime'
@@ -128,8 +139,10 @@ def split_to_list(json_dicio, col='Genre', sep=", "):
 	'''
 		Converts a category to list.
 	'''
-	# i check if it's not null before
-	json_dicio[col] = json_dicio[col].split(sep)
+	if len(json_dicio[col]) == 0:
+		json_dicio[col] = []
+	else:
+		json_dicio[col] = json_dicio[col].split(sep)
 	return json_dicio
 
 def writers_split(json_dicio, sep=", "):
@@ -197,10 +210,27 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 		Cleans the dict
 	'''
 	json_dicio = drop_columns(json_dicio, drop_list)
-	json_dicio = replace_str(json_dicio)
+	json_dicio = replace_null(json_dicio) #replace_str(json_dicio)
 	
 	for col in columns_keep:
-		if pd.notnull(json_dicio[col]):
+		
+		if col == 'Genre':
+			json_dicio = split_to_list(json_dicio, col)
+
+		elif col == 'Director':
+			json_dicio = split_to_list(json_dicio, col)
+		
+		elif col == 'Language':
+			json_dicio[col] = json_dicio[col].replace("Norse,  Old", "Old Norse") #corrects a mistake
+			json_dicio = split_to_list(json_dicio, col)
+
+		elif col == 'Country':
+			json_dicio = split_to_list(json_dicio, col)
+
+		elif col == 'Actors':
+			json_dicio = split_to_list(json_dicio, col)
+
+		elif pd.notnull(json_dicio[col]):
 			if col == 'Runtime':
 				json_dicio = convert_to_minutes(json_dicio)
 
@@ -216,25 +246,9 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 			elif col == 'imdbVotes':
 				json_dicio[col] = int(json_dicio[col].replace(",", ""))
 
-			elif col == 'Genre':
-				json_dicio = split_to_list(json_dicio, col)
-
-			elif col == 'Director':
-				json_dicio = split_to_list(json_dicio, col)
-
-			elif col == 'Language':
-				json_dicio[col] = json_dicio[col].replace("Norse,  Old", "Old Norse") #corrects a mistake
-				json_dicio = split_to_list(json_dicio, col)
-				#pass
-			elif col == 'Country':
-				json_dicio = split_to_list(json_dicio, col)
-
-			elif col == 'Actors':
-				json_dicio = split_to_list(json_dicio, col)
-
 			elif col == 'Writer':
-				#json_dicio = split_to_list(json_dicio, col) #look after
 				json_dicio = writers_split(json_dicio, sep=", ")
+				
 			elif col == 'Awards':
 				json_dicio = awards_split(json_dicio)
 
@@ -279,8 +293,8 @@ def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False
 		dicio_type_check(content_dict, row=128)
 
 	if pandas:
-		df = pd.DataFrame.from_records(content_dict, exclude=['Genre','Director','Writer','Actors','Language', 'Country', 'Awards'])
-		print(df['Title'].value_counts())
+		df = pd.DataFrame.from_records(content_dict, exclude=['Genre','Writer','Actors','Language', 'Country', 'Awards'])
+		print(df['Director'].value_counts())
 		print(df.columns)
 
 		#print(df.loc[df['Writer'] == 'Anders Nyberg, Ola Olsson, Carin Pollak, Kay Pollak, Margaretha Pollak'])
