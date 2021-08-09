@@ -134,15 +134,44 @@ def item_rating_after_bias(item, user_dict, content_dict, content, perc=True):
 
 	return np.mean([avg_after, w_avg_after])
 
-def user_and_item(user_dict, item, content, perc=True):
+
+def reset_weights(ratings_dict, plot_rating, genre_rating, weights=np.array([1/4, 1/4, 1/4, 1/4])):
+	
+	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else ratings_dict['weighted_rate']
+	
+	if plot_rating == -1: #does not have
+		weights[2] = 0
+		plot_rating = 0
+	if genre_rating == -1: #does not have
+		weights[3] = 0
+		genre_rating = 0
+
+	#weights = weights/sum(weights)
+	
+	tipo=''
+	if ratings_dict['user_avg_rating'] == 0:
+		tipo += "user_avg_rating | "
+	if item_after_bias == 0:
+		tipo += "item_after_bias | "
+	if plot_rating == 0:
+		tipo += "plot_rating | "
+	if genre_rating == 0:
+		tipo += "genre_rating"
+
+	pred = np.average([ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating], weights=weights)
+
+	return pred
+
+def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/4, 1/4, 1/4, 1/4])):
 	
 
 	content_dict, one_hot_dict = content.get_content_dict(), content.get_one_hot_dict()
-	user_avg_rating = get_user_avg(user_dict)
-	item_avg_rating = content_dict[item]['weighted_rate']
-
-	item_after_bias = item_rating_after_bias(item, user_dict, content_dict, content, perc=True)
-	item_after_bias = item_after_bias if item_after_bias>0 else item_avg_rating
+	ratings_dict = {
+		'user_avg_rating':get_user_avg(user_dict),
+		'weighted_rate': content.get_content_dict_item(item, col='weighted_rate'),
+		'imdbRating': content.get_content_dict_item(item, col='imdbRating'),
+		'item_after_bias': item_rating_after_bias(item, user_dict, content_dict, content, perc=True)
+		}
 
 	'''
 	genres_profile = generate_profile(user_dict, content, start_perc=0.2)
@@ -154,27 +183,42 @@ def user_and_item(user_dict, item, content, perc=True):
 
 	plot_rating, genre_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
 	#print(item, plot_rating, genre_rating)
-
-
-	return np.mean([user_avg_rating, item_after_bias, plot_rating, genre_rating])
+	pred = reset_weights(ratings_dict, plot_rating, genre_rating, weights=weights)
+	return pred
 
 def user_not_item(user_dict, content, perc=True, show=False):
 	
 	content_dict, one_hot_dict = content.get_content_dict(), content.get_one_hot_dict()
-	bruto, percentual = calculate_user_bias(user_dict, content_dict)
 
-	#genres_avg_user(user_dict, one_hot_dict)	
-	
+
+	bruto, percentual = calculate_user_bias(user_dict, content_dict, column='imdbRating')
+	w_bruto, w_percentual = calculate_user_bias(user_dict, content_dict, column='weighted_rate')
+
+	avg_rating = content.get_avg_rating()
+	avg_w_rating = content.get_avg_weight_rating()
+
 	if show:
 		for item, rating in user_dict.items():
 			imdbRating = content_dict[item]['imdbRating']
 			b = imdbRating + bruto
 			p = imdbRating * (1+percentual)
 			print("Rating: {} | imdbRating: {} | bruto: {} | perc: {}".format(rating, imdbRating, b, p))
-	
-	bias = percentual if perc else bruto
 
-	return bias
+	#genres_avg_user(user_dict, one_hot_dict)
+
+	avg_after, w_avg_after = 0,0
+	if perc:
+		avg_after =  avg_rating * (1 + percentual)
+		w_avg_after = avg_w_rating *(1 + w_percentual)
+	else:
+		avg_after = avg_rating + bruto
+		w_avg_after = avg_w_rating + w_bruto
+	
+	if avg_w_rating == 0:
+		return avg_after
+
+	return np.mean([avg_after, w_avg_after])
+	
 
 def item_not_user(item, content_dict, content):
 	
@@ -227,6 +271,9 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 		if user in users_d and item in items_d:
 			#print(dicio[user])
 			pred = user_and_item(dicio[user], item, content, perc=True)
+				#sanity check
+			pred = 10 if pred>10 else pred
+			pred = 0 if pred < 0 else pred
 			predictions.append(pred)
 		
 		#only user in train

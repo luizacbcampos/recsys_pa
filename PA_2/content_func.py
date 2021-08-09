@@ -236,11 +236,13 @@ def genres_avg_user(user_dict, one_hot_dict):
 
 def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	
+	plot_rating, plot_sim, qtd_plot = 0, 0, len(content.get_content_dict_item(item, col='Plot')) 
+	genre_rating, genre_sim, qtd_genre = 0, 0, len(content.get_content_dict_item(item, col='Genre'))
+
+	if qtd_genre == 0 and qtd_plot == 0: #item does not have this info
+		return -1, -1
+
 	one_hot_dict = content.get_one_hot_dict()
-
-	plot_rating, plot_sim = 0, 0
-	genre_rating, genre_sim = 0, 0
-
 	for item_id, rating in user_dict.items():
 		sim = cos_items(item, item_id, content)
 		plot_rating += rating * sim
