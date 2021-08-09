@@ -37,6 +37,9 @@ def tokenization(target_string, lower_=True, number=True, accents=True):
 		number: converts number to text
 		accents: replaces accented characters
 	'''
+	if target_string == '':
+		return []
+
 	if lower_:
 		target_string = target_string.lower()		
 
@@ -46,8 +49,8 @@ def tokenization(target_string, lower_=True, number=True, accents=True):
 	if accents:
 		target_string = strip_accents(target_string)
 
-	word_list = tokenize(target_string)
-	return word_list
+	#word_list = tokenize(target_string)
+	return tokenize(target_string) #word_list
 
 def nltk_english_stop_words():
 	return {'those', 'not', 'you', 'having', 'will', 'to', 't', "you'll", "didn't", 'her', 'no', 'can', 'yourselves', 'doing', 'just', 'down', 'all', 'yourself', 'nor', 'wasn', 'for', 'before', 'had', 'did', 'd', 'now', 'does', 'll', 'm', "mightn't", 'this', 'them', 'a', 'won', 'about', 'that', 'wouldn', "don't", 'shouldn', 'an', "needn't", 'hers', 'at', 'your', 'each', 'who', 'where', 'itself', 'so', 'ma', 'when', 'below', "it's", 'do', 'in', 'mustn', 'their', 'should', 'because', 'other', 'only', 'they', 'he', 'further', 'couldn', 'there', 'my', 'of', 'while', 'am', 'and', 'or', 'any', 'with', 'isn', "mustn't", 'theirs', 'herself', 'were', 'me', "she's", 'it', 'been', 'i', "you've", 'until', 'very', 'being', 'himself', 'we', 'out', 'needn', 'was', 'weren', 'are', 'these', 'once', "couldn't", 'didn', "haven't", 'hadn', 'aren', 'between', 'if', 'here', 'why', "isn't", 'during', 'over', 'same', 'more', 'be', 'than', "you'd", 'myself', 'above', 'own', "hadn't", 'hasn', "wouldn't", 'such', 'what', 're', 'mightn', 'is', 'have', 'y', 'off', 'under', 'o', 'she', 'into', 'yours', 'shan', 'on', 'as', 'most', 'has', "doesn't", 'him', 'doesn', 's', 'then', 'how', 'ain', "shan't", "wasn't", 'through', "won't", 'its', 'from', 'by', "shouldn't", 'after', 'both', 'the', "should've", "hasn't", 'up', 'ours', "you're", 'don', 'haven', 'but', 'themselves', 'which', 'few', "that'll", 'his', 'our', 've', "weren't", 'too', "aren't", 'some', 'again', 'whom', 'ourselves', 'against'}
@@ -81,6 +84,9 @@ def tokenize_plot(plot, lower_=True, number=True, apostrophe=True, punctuation=T
 		Returns the plot tokenized in list format
 	'''
 	word_list = tokenization(plot, lower_, number, accents)
+
+	if len(word_list) == 0:
+		return word_list
 	
 	if punctuation:
 		word_list = remove_punctuation(word_list)
@@ -224,6 +230,7 @@ def create_TFIDF(json_dicio, lower_=True, number=True, apostrophe=True, punctuat
 	'''
 	wordSet = set()
 	token_dict = {}
+	idfDict = {}
 
 	if stem == 'snowball':
 		stemmer = Stemmer('english')
@@ -232,13 +239,20 @@ def create_TFIDF(json_dicio, lower_=True, number=True, apostrophe=True, punctuat
 
 	for item_id, dicio in json_dicio.items():
 		tokens = tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, stemmer, accents)
-		wordSet = wordSet.union(set(tokens))
 		token_dict[item_id] = tokens
-	
-	idfDict = computeIDF(wordSet, token_dict)
+		for token in set(tokens):
+			if token in idfDict:
+				idfDict[token] += 1
+			else:
+				idfDict[token] = 1
+		#wordSet = wordSet.union(set(tokens))
+
+	for word, val in idfDict.items():
+	    idfDict[word] = np.log10(len(token_dict) / float(val))
+
 	tfidf_dict = create_TFIDF_dict(token_dict, idfDict)
 	tfidf_dict_sqrd = tfidf_SQRD(tfidf_dict)
-	
+
 	return tfidf_dict, tfidf_dict_sqrd
 
 

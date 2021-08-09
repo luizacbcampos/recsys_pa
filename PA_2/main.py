@@ -74,6 +74,7 @@ set_up = Setup(verbose=False, lower_=True, number=True, apostrophe=True, punctua
 
 content_dict = load_content(content_file, drop_list=set_up.get_drop_list())
 
+#time_a_function(rf.set_enviromment, df, content_dict, set_up)
 dados, content = rf.set_enviromment(df, content_dict, set_up)
 
 t = load_targets(targets_file)

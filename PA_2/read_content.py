@@ -85,7 +85,9 @@ def replace_str(some_dict, string=r'^N/A$', replace=np.nan):
 	return { k: (replace if re.match(string,v) else v) for k, v in some_dict.items() }
 
 def replace_null(some_dict, string=r'^N/A$', replace=np.nan):
-	
+	'''
+		Replaces a NULL value
+	'''
 	for column, value in some_dict.items():
 		if column == 'Plot' or column == 'Title':
 			some_dict[column] = '' if re.match(string,value) else value
@@ -93,7 +95,7 @@ def replace_null(some_dict, string=r'^N/A$', replace=np.nan):
 		elif column == 'Genre' or column == 'Director' or column == 'Language' or column == 'Country' or column == 'Actors':
 			some_dict[column] = '' if re.match(string,value) else value
 		
-		elif column == 'imdbVotes' or column == 'imdbRating':
+		elif column == 'imdbVotes' or column == 'imdbRating' or column == 'Year':
 			some_dict[column] = '0' if re.match(string,value) else value		
 		else:
 			some_dict[column] = replace if re.match(str(string),value) else value
@@ -222,6 +224,15 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 		if col == 'Genre':
 			json_dicio = split_to_list(json_dicio, col)
 
+		elif col == 'imdbRating':
+			json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
+
+		elif col == 'imdbVotes':
+			json_dicio[col] = int(json_dicio[col].replace(",", ""))
+
+		elif col == 'Year':
+			json_dicio = convert_to_number(json_dicio, col, numeric_type=int)
+
 		elif col == 'Director':
 			json_dicio = split_to_list(json_dicio, col)
 		
@@ -235,21 +246,12 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 		elif col == 'Actors':
 			json_dicio = split_to_list(json_dicio, col)
 
-		elif col == 'imdbRating':
-			json_dicio = convert_to_number(json_dicio, col, numeric_type=float)
-
-		elif col == 'imdbVotes':
-			json_dicio[col] = int(json_dicio[col].replace(",", ""))
-
 		elif pd.notnull(json_dicio[col]):
 			if col == 'Runtime':
 				json_dicio = convert_to_minutes(json_dicio)
 
 			elif col == 'Rated':
 				json_dicio = age_rating(json_dicio)
-
-			elif col == 'Year':
-				json_dicio = convert_to_number(json_dicio, col, numeric_type=int)
 
 			elif col == 'Writer':
 				json_dicio = writers_split(json_dicio, sep=", ")
@@ -264,7 +266,7 @@ def data_cleaning(json_dicio, columns_keep, drop_list=None):
 		#print(col)
 	return json_dicio
 
-def load_content(content_file="content.csv", drop_list=None):
+def load_content(content_file="content.csv", drop_list=None, dict_dict=True):
 	'''
 		Loads the csv
 	'''
@@ -302,29 +304,34 @@ def load_content(content_file="content.csv", drop_list=None):
 			json_dicio = data_cleaning(json_dicio, columns_keep, drop_list)
 			name = json_dicio.pop('ItemId')		
 			new_dict[name] = json_dicio
-
 		f.close()
 		return new_dict
 
-	return make_dict_dict(content_file) #make_list_dict(content_file)
+	if dict_dict:
+		return make_dict_dict(content_file)
+	else:
+		return make_list_dict(content_file)
 
 
-def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False):
+def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False, dict_dict=False):
 
-	content_dict = load_content(content_file, drop_list)
+	content_dict = load_content(content_file, drop_list, dict_dict)
 	
 	if verbose:
 		dicio_type_check(content_dict, row=128)
 
 	if pandas:
+
 		df = pd.DataFrame.from_records(content_dict, exclude=['Director','Writer','Actors','Language', 'Country', 'Awards'])
 		
-		print(df['ItemId'].value_counts())
+		#print(df['Year'].value_counts())
 		print(df.columns)
 		#print(df)
 
-		df = df.explode('Genre')
-		print(df.groupby(['Genre']).sum()[['imdbRating', 'imdbVotes']])
+		df['Decade']= np.floor(df['Year']/10)
+		#df['Decade']=df['Decade'].astype(int)
+		#df = df.explode('Genre')
+		print(df.groupby(['Decade']).mean()[['imdbRating', 'imdbVotes']])
 		
 		#print(df.sort_values(by=['imdbRating'], na_position='first')['imdbRating'].drop_duplicates())
 		#print(df.dtypes)

@@ -135,8 +135,11 @@ def item_rating_after_bias(item, user_dict, content_dict, content, perc=True):
 	return np.mean([avg_after, w_avg_after])
 
 
-def reset_weights(ratings_dict, plot_rating, genre_rating, weights=np.array([1/4, 1/4, 1/4, 1/4])):
+def reset_weights(ratings_dict, weights=np.array([1/4, 1/4, 1/4, 1/4])):
 	
+	plot_rating = ratings_dict['plot_rating']
+	genre_rating = ratings_dict['genre_rating']
+	year_rating = ratings_dict['year_rating']
 	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else ratings_dict['weighted_rate']
 	
 	if plot_rating == -1: #does not have
@@ -145,6 +148,9 @@ def reset_weights(ratings_dict, plot_rating, genre_rating, weights=np.array([1/4
 	if genre_rating == -1: #does not have
 		weights[3] = 0
 		genre_rating = 0
+	if year_rating == -1: #does not have
+		weights[4]=0
+		year_rating = 0
 
 	#weights = weights/sum(weights)
 	
@@ -158,11 +164,11 @@ def reset_weights(ratings_dict, plot_rating, genre_rating, weights=np.array([1/4
 	if genre_rating == 0:
 		tipo += "genre_rating"
 
-	pred = np.average([ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating], weights=weights)
+	pred = np.average([ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating, year_rating], weights=weights)
 
 	return pred
 
-def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/4, 1/4, 1/4, 1/4])):
+def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 	
 
 	content_dict, one_hot_dict = content.get_content_dict(), content.get_one_hot_dict()
@@ -180,10 +186,13 @@ def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/4, 1/
 	else:
 		cos_sim = 0
 	'''
+	plot_rating, genre_rating, year_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
+	ratings_dict['plot_rating'] = plot_rating
+	ratings_dict['genre_rating'] = genre_rating
+	ratings_dict['year_rating'] = year_rating
 
-	plot_rating, genre_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
 	#print(item, plot_rating, genre_rating)
-	pred = reset_weights(ratings_dict, plot_rating, genre_rating, weights=weights)
+	pred = reset_weights(ratings_dict, weights=weights)
 	return pred
 
 def user_not_item(user_dict, content, perc=True, show=False):

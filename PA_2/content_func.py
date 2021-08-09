@@ -17,12 +17,17 @@ class Content(object):
 		self.genre_mean = self.set_genre_mean()
 		self.quantile = self.set_movie_quantile()
 		self.content_dict = self.set_weighted_rating()
-		self.one_hot_dict = self.set_one_hot_dict()
 		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
-
+		self.content_dict = self.set_decade()
+		self.one_hot_dict = self.set_one_hot_dict()
 
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
+
+	def set_decade(self):
+		for item_id, dicio in self.content_dict.items():
+			self.content_dict[item_id]['Decade'] = np.floor(dicio['Year']/10)
+		return self.content_dict
 	
 	def set_genre_mean(self):
 		genre_mean = {}
@@ -234,13 +239,25 @@ def genres_avg_user(user_dict, one_hot_dict):
 	
 	return avg_user_genre
 
+def similarity_year(dec1, dec2, weight=0.75):
+	
+	if dec2 == 0 or dec1 == 0:
+		return 0
+
+	max_distance = 12 #201-189
+	dec_diff = abs(dec1-dec2)
+
+	similarity = 1 - (weight*dec_diff)/max_distance
+	return similarity
+
 def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	
 	plot_rating, plot_sim, qtd_plot = 0, 0, len(content.get_content_dict_item(item, col='Plot')) 
 	genre_rating, genre_sim, qtd_genre = 0, 0, len(content.get_content_dict_item(item, col='Genre'))
+	year_rating, year_sim, decade_value = 0,0, content.get_content_dict_item(item, col='Decade')
 
-	if qtd_genre == 0 and qtd_plot == 0: #item does not have this info
-		return -1, -1
+	if qtd_genre == 0 and qtd_plot == 0 and decade_value == 0: #item does not have this info
+		return -1, -1, -1
 
 	one_hot_dict = content.get_one_hot_dict()
 	for item_id, rating in user_dict.items():
@@ -251,11 +268,21 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 		sim = cossine_call(one_hot_dict[item_id], one_hot_dict[item])
 		genre_rating += rating * sim
 		genre_sim += abs(sim)
+
+		sim = similarity_year(decade_value, content.get_content_dict_item(item_id, col='Decade'), weight=0.75)
+		year_rating += rating * sim
+		year_sim += abs(sim)
 	
 	plot_rating = plot_rating/plot_sim if plot_sim != 0 else 0 
 	genre_rating = genre_rating/genre_sim if genre_sim != 0 else 0
+	year_rating = year_rating/year_sim if year_sim != 0 else 0
 
-	return plot_rating, genre_rating
+	#sanity checks
+	plot_rating = -1 if qtd_plot == 0 else plot_rating
+	genre_rating = -1 if qtd_genre == 0 else genre_rating
+	year_rating = -1 if decade_value  == 0 else year_rating
+
+	return plot_rating, genre_rating, year_rating
 
 def genres_profile_calculation(genres_profile, start_perc=0.2):
 
