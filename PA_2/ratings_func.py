@@ -237,7 +237,7 @@ def item_not_user(item, content):
 	if content_dict[item]['imdbRating'] == 0:
 		if len(content_dict[item]['Genre']) > 0:
 			genre_avg = item_category_avg(item, content, category='Genre')
-			pred = np.average([avg_rating, genre_avg], weights=[1./4, 3./4])
+			pred = np.average([avg_rating, genre_avg], weights=[2./4, 2./4])
 		else:
 			pred = avg_rating
 
