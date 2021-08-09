@@ -164,7 +164,8 @@ def reset_weights(ratings_dict, weights=np.array([1/4, 1/4, 1/4, 1/4])):
 	if genre_rating == 0:
 		tipo += "genre_rating"
 
-	pred = np.average([ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating, year_rating], weights=weights)
+	vector = [ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating, year_rating]
+	pred = np.average(vector, weights=weights)
 
 	return pred
 
@@ -179,13 +180,6 @@ def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/5, 1/
 		'item_after_bias': item_rating_after_bias(item, user_dict, content_dict, content, perc=True)
 		}
 
-	'''
-	genres_profile = generate_profile(user_dict, content, start_perc=0.2)
-	if np.any(one_hot_dict[item]):
-		cos_sim = short_array_cos_sim(genres_profile, one_hot_dict[item])
-	else:
-		cos_sim = 0
-	'''
 	plot_rating, genre_rating, year_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
 	ratings_dict['plot_rating'] = plot_rating
 	ratings_dict['genre_rating'] = genre_rating
@@ -272,15 +266,17 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	
 	#content related
 	avg_rating = content.get_avg_rating()
+	w_avg_rating = content.get_avg_weight_rating()
 	content_dict = content.get_content_dict()
-	one_hot_dict = content.get_one_hot_dict()
 
 	pred = 0
+	weights=np.array([1/10, 2/10, 3/10, 3/10, 1/10])
+
 	for user, item in test_tuple:
 		#both were in train
 		if user in users_d and item in items_d:
 			#print(dicio[user])
-			pred = user_and_item(dicio[user], item, content, perc=True)
+			pred = user_and_item(dicio[user], item, content, perc=True, weights=weights)
 		
 		#only user in train
 		elif user in users_d:
@@ -292,7 +288,10 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 		#frozen
 		else:
-			pred = avg_rating
+			if w_avg_rating == 0:
+				pred = avg_rating
+			else:
+				pred = np.mean([w_avg_rating, avg_rating])
 		
 		#sanity check
 		pred = 10 if pred>10 else pred
