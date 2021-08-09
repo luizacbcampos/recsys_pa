@@ -266,32 +266,29 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	content_dict = content.get_content_dict()
 	one_hot_dict = content.get_one_hot_dict()
 
+	pred = 0
 	for user, item in test_tuple:
 		#both were in train
 		if user in users_d and item in items_d:
 			#print(dicio[user])
 			pred = user_and_item(dicio[user], item, content, perc=True)
-				#sanity check
-			pred = 10 if pred>10 else pred
-			pred = 0 if pred < 0 else pred
-			predictions.append(pred)
 		
 		#only user in train
 		elif user in users_d:
 			pred = user_not_item(dicio[user], content)
-			#sanity check
-			pred = 10 if pred>10 else pred
-			pred = 0 if pred < 0 else pred
-			predictions.append(pred)
 
 		#only item in train
 		elif item in items_d:
 			pred = item_not_user(item, content_dict, content)
-			predictions.append(pred)
 
 		#frozen
 		else:
-			predictions.append(avg_rating)
+			pred = avg_rating
+		
+		#sanity check
+		pred = 10 if pred>10 else pred
+		pred = 0 if pred < 0 else pred
+		predictions.append(pred)
 		
 	print_predictions(test_tuple, predictions)
 	return
