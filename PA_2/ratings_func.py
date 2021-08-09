@@ -278,10 +278,11 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 		
 		#only user in train
 		elif user in users_d:
-			bias = user_not_item(dicio[user], content)
-			user_rating =  avg_rating*(1+bias) if perc else avg_rating + bias
-			#print(user_rating)
-			predictions.append(user_rating)
+			pred = user_not_item(dicio[user], content)
+			#sanity check
+			pred = 10 if pred>10 else pred
+			pred = 0 if pred < 0 else pred
+			predictions.append(pred)
 
 		#only item in train
 		elif item in items_d:
