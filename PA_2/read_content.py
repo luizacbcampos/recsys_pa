@@ -23,6 +23,7 @@ def all_categories():
 	'''
 		All possible json keys
 	'''
+	
 	col = ['ItemId', 'Title', 'Year', 'Rated', 'Released', 'Runtime', 'Genre','Director', 'Writer',
 		'Actors', 'Plot', 'Language', 'Country', 'Awards', 'Poster', 'Metascore', 'imdbRating',
 		'imdbVotes', 'imdbID', 'Type', 'Response', 'Error', 'Season', 'Episode', 'seriesID']
@@ -95,7 +96,7 @@ def replace_null(some_dict, string=r'^N/A$', replace=np.nan):
 		elif column == 'imdbVotes' or column == 'imdbRating':
 			some_dict[column] = '0' if re.match(string,value) else value		
 		else:
-			some_dict[column] = replace if re.match(string,value) else value
+			some_dict[column] = replace if re.match(str(string),value) else value
 	return some_dict
 
 def convert_to_minutes(json_dicio):
@@ -286,7 +287,26 @@ def load_content(content_file="content.csv", drop_list=None):
 		f.close()
 		return dicio_list
 
-	return make_list_dict(content_file)
+	def make_dict_dict(content_file):
+		new_dict = {}
+		f = open(content_file, 'r')
+		y = make_dict(drop_list)
+		columns_keep = category_keeps(drop_list)
+		next(f)
+		
+		for line in f.readlines():
+			itemId, json_string = line.split(',', 1)
+			json_dicio = {**y, **{'ItemId': itemId}}
+			json_dicio.update(literal_eval(json_string))
+			#modifications
+			json_dicio = data_cleaning(json_dicio, columns_keep, drop_list)
+			name = json_dicio.pop('ItemId')		
+			new_dict[name] = json_dicio
+
+		f.close()
+		return new_dict
+
+	return make_dict_dict(content_file) #make_list_dict(content_file)
 
 
 def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False):
@@ -299,17 +319,16 @@ def main(content_file="content.csv", drop_list=None, pandas=False, verbose=False
 	if pandas:
 		df = pd.DataFrame.from_records(content_dict, exclude=['Director','Writer','Actors','Language', 'Country', 'Awards'])
 		
-		print(df['Genre'].value_counts())
+		print(df['ItemId'].value_counts())
 		print(df.columns)
 		#print(df)
 
 		df = df.explode('Genre')
 		print(df.groupby(['Genre']).sum()[['imdbRating', 'imdbVotes']])
 		
-		#print('imdbRating', df['imdbRating'].sum())
-		#print('imdbVotes', df['imdbVotes'].sum())
 		#print(df.sort_values(by=['imdbRating'], na_position='first')['imdbRating'].drop_duplicates())
-		#rint(df.dtypes)
+		#print(df.dtypes)
+
 	return content_dict
 
 if __name__ == '__main__':

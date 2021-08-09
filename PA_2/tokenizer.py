@@ -5,6 +5,10 @@ import unicodedata
 from num2word import num2words
 from snowball_stemmer import Stemmer
 
+
+def non_zero_dict(dicio):
+	return {k: v for k, v in dicio.items() if v != 0}
+
 def tokenize(target_string, pattern=r"[\w]+\'[\w]+|[\w]+\-[\w]+|[\w]+"):
 	'''
 		Tokenizes a string. Simple pattern: r"[\w']+"
@@ -118,7 +122,7 @@ def create_word_set(json_dicio, lower_=True, number=True, apostrophe=True, punct
 		Creates a set with every word on the plots
 	'''
 	wordSet = set()
-	for dicio in json_dicio:
+	for item_id, dicio in json_dicio.items():
 		tokens = set_tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, accents)
 		wordSet = wordSet.union(tokens)
 	return wordSet
@@ -135,10 +139,10 @@ def create_word_set_and_dict(json_dicio, lower_=True, number=True, apostrophe=Tr
 	else:
 		stemmer = None
 
-	for dicio in json_dicio:
+	for item_id, dicio in json_dicio.items():
 		tokens = tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, stemmer, accents)
 		wordSet = wordSet.union(set(tokens))
-		token_dict[dicio['ItemId']] = tokens
+		token_dict[item_id] = tokens
 	
 	return wordSet, token_dict
 
@@ -148,23 +152,24 @@ def make_wordSetDict(wordSet):
 	'''
 	return dict.fromkeys(wordSet, 0)
 
-def make_ItemId_wordDict(wordSet, tokens):
+def make_ItemId_wordDict(tokens):
 	'''
 		Counts ocurrence of word in tokens
 	'''
-	wordDict = make_wordSetDict(wordSet)
+	#wordDict = make_wordSetDict(wordSet)
+	wordDict = make_wordSetDict(set(tokens)) #try
 	for word in tokens:
 		wordDict[word]+=1
 	return wordDict
 
 
-def computeTF(wordSet, tokens):
+def computeTF(tokens):
 	'''
 		Computes term frequency
 	'''
 	tfDict = {}
 	tokensCount = len(tokens)
-	wordDict = make_ItemId_wordDict(wordSet, tokens)
+	wordDict = make_ItemId_wordDict(tokens)
 	for word, count in wordDict.items():
 		tfDict[word] = count/float(tokensCount)
 	return tfDict
@@ -187,15 +192,55 @@ def computeIDF(wordSet, token_dict):
 	    
 	return idfDict
 
-def computeTFIDF(wordSet, tokens, idfDict):
+def create_TFIDF_dict(token_dict, idfDict):
 	
-	tfidf = {}
-	tfbow = computeTF(wordSet, tokens)
-	for word, val in tfbow.items():
-		tfidf[word] = val*idfDict[word]
-	return tfidf
 
+	tfidf_dict = {}
+	for item_id, tokens in token_dict.items():
+		tfidf = {}
+		tfbow = computeTF(tokens)
+		for word, val in tfbow.items():
+			tfidf[word] = val*idfDict[word]
+		tfidf_dict[item_id] = tfidf
+	return tfidf_dict
+
+def tfidf_SQRD(tfidf_dict):
+	'''
+		Pre-calculation of SQRT(SUM[item² for item in tfidf])
+	'''
+	tfidf_sqrd = {}
+	for item_id, tokens in tfidf_dict.items():
+		vetor = np.array(list(tokens.values()))
+		vetor = np.power(vetor, 2)
+		soma = np.sum(vetor)
+		sqrt = np.sqrt(soma)
+		tfidf_sqrd[item_id] = sqrt
 	
+	return tfidf_sqrd
+
+def create_TFIDF(json_dicio, lower_=True, number=True, apostrophe=True, punctuation=True, stem='snowball', accents=True):
+	'''
+		Creates TF-IDF dicts
+	'''
+	wordSet = set()
+	token_dict = {}
+
+	if stem == 'snowball':
+		stemmer = Stemmer('english')
+	else:
+		stemmer = None
+
+	for item_id, dicio in json_dicio.items():
+		tokens = tokenize_plot(dicio['Plot'], lower_, number, apostrophe, punctuation, stemmer, accents)
+		wordSet = wordSet.union(set(tokens))
+		token_dict[item_id] = tokens
+	
+	idfDict = computeIDF(wordSet, token_dict)
+	tfidf_dict = create_TFIDF_dict(token_dict, idfDict)
+	tfidf_dict_sqrd = tfidf_SQRD(tfidf_dict)
+	
+	return tfidf_dict, tfidf_dict_sqrd
+
 
 if __name__ == '__main__':
 	

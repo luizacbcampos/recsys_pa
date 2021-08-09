@@ -5,15 +5,16 @@ import numpy as np
 import pandas as pd
 
 #meus
-#import matrix as m
+import ratings_func as rf
+from setup import Setup
 
-from read_content import load_content
+
 from content_func import pass_this
-from tokenizer import create_word_set_and_dict, computeTF, computeIDF, computeTFIDF
+from read_content import load_content
+from tokenizer import create_word_set_and_dict, computeTF, computeIDF, create_TFIDF_dict, create_TFIDF
 
 from timer import time_a_function, compare_many_functions
 from functools import partial
-
 
 
 ratings_file ="ratings.csv"
@@ -63,9 +64,29 @@ def load_targets(targets_file):
 
 
 
-
 df = load_ratings(ratings_file)
-content_dict = load_content(content_file)
+
+drops = ['Rated', 'Released', 'Runtime', 'Director', 'Writer', 'Actors', 'Language', 'Country', 'Awards', 
+		'Poster', 'Metascore', 'imdbID', 'Type', 'Response', 'Error', 'Season', 'Episode', 'seriesID']
+
+set_up = Setup(verbose=False, lower_=True, number=True, apostrophe=True, punctuation=True, 
+	stem='snowball', accents=True, drop_list=drops)
+
+content_dict = load_content(content_file, drop_list=set_up.get_drop_list())
+
+dados, content = rf.set_enviromment(df, content_dict, set_up)
+
+t = load_targets(targets_file)
+
+rf.get_predictions(t, dados, content, set_up)
+
+#time_a_function(rf.get_predictions, t, dados, content, set_up)
+
+
+
+
+
+#pass_this(content_dict)
 
 '''
 print("lower_=True, number=True")
@@ -73,24 +94,11 @@ wordSet, token_dict = create_word_set_and_dict(content_dict, lower_=True, number
 print(len(wordSet))
 #print_list(wordSet)
 idfDict = computeIDF(wordSet, token_dict)
-tfidf = computeTFIDF(wordSet, token_dict['i4696222'], idfDict)
+create_TFIDF_dict(wordSet, token_dict, idfDict)
 
 #print(non_zero_dict(tfidf))
 '''
 
-
 '''
 compare_many_functions([partial(create_word_set,content_dict), partial(create_word_set,content_dict, lower_=True, number=False)], 10)
-'''
-
-
-
-pass_this(content_dict)
-
-'''
-set_up = m.setup(k=20, epochs=10, l_rt=0.009, reg=0.1, random=False, verbose=False)
-dados = m.set_enviromment(df, set_up)
-
-t = load_targets(targets_file)
-m.get_predictions(t, dados, set_up)
 '''

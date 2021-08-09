@@ -1,56 +1,26 @@
 #import time
-import re
-import sys
 import numpy as np
 import pandas as pd
 
 from collections import defaultdict
+from setup import Setup
+from content_func import Content, generate_profile, short_array_cos_sim, genres_avg_user, similarity_calculations
 
-class Dados():
+class Dados(object):
 	'''
 		Classe que guarda informações do dataframe
 	'''
 	def __init__(self, df):
 		self.users = list(df['UserId'].unique())
 		self.items = list(df['ItemId'].unique())
-		self.dicio = set_dict(df)
+		self.dicio = self.set_dict(df)
 	
-	def set_dict(df):
+	def set_dict(self, df):
 		dicio = defaultdict(dict)
 		users, items, ratings = df.values.T
 		for u,i,r in zip(users, items, ratings):
 			dicio[u][i] = r
 		return dicio
-
-
-
-class Dados:
-	'''
-		Classe que guarda informações do dataframe
-	'''
-	def __init__(self, df):
-		self.users = list(df['UserId'].unique())
-		self.items = list(df['ItemId'].unique())
-		
-		#dicionarios
-		self.users_dict = {self.users[i]: i for i in range(len(self.users))}
-		self.items_dict = {self.items[i]: i for i in range(len(self.items))}
-		#tupla
-		self.tuples = [(self.users_dict[x[0]], self.items_dict[x[1]], x[2]) for x in df.to_records(index=False)]
-
-		#info
-		# np.array [count, mean]
-		self.mu = df['Prediction'].mean()
-		'''
-		Did not work out
-		self.users_avg = df.groupby(by='UserId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
-		self.items_avg = df.groupby(by='ItemId', observed=True, sort=False)['Prediction'].agg(['count','mean']).to_numpy()
-		'''
-		#Resultados
-		self.user_embedding = None
-		self.item_embedding = None
-		self.user_bias = None
-		self.item_bias = None
 
 	def get_users(self):
 		return self.users
@@ -64,163 +34,29 @@ class Dados:
 	def get_n_items(self):
 		return len(self.items)
 
-	def get_users_dict(self):
-		return self.users_dict
+	def get_dicio(self):
+		return self.dicio
 
-	def get_items_dict(self):
-		return self.items_dict
-	
-	def get_tuples(self):
-		return self.tuples
-
-	def get_N_tuples(self):
-		return len(self.tuples)
-
-	def get_mu(self):
-		return self.mu
-
-	'''
-		Removido
-	def get_users_avg(self):
-		return self.users_avg[:,1] - self.mu
-
-	def get_items_avg(self):
-		return self.items_avg[:,1] - self.mu
-	'''
-	def set_u_emb(self, user_emb):
-		self.user_embedding = user_emb
-
-	def set_i_emb(self, item_emb):
-		self.item_embedding = item_emb
-
-	def get_embeddings(self):
-		return self.user_embedding, self.item_embedding
-	
-	def set_u_bias(self, user_b):
-		self.user_bias = user_b
-	
-	def set_i_bias(self, item_b):
-		self.item_bias = item_b
-
-	def get_bias(self):
-		return self.user_bias, self.item_bias
+	def get_N_dicio(self):
+		return len(self.dicio)
 
 	def cleanup_results(self):
-		#del self.users_avg
-		#del self.items_avg
-		del self.tuples
-
-class setup(object):
-	""" Setup arguments class """
-	def __init__(self, k, epochs, l_rt, reg, random, verbose):
-		self.k = k
-		self.epochs = epochs
-		self.learning_rate = l_rt
-		self.regularizer = reg
-		self.random = random
-		self.verbose = verbose
-	def get(self):
-		return self.k, self.epochs, self.learning_rate, self.regularizer, self.random, self.verbose
-		
-
+		#del self.tuples
+		pass
 
 def target_to_list(df):
 	return [x for x in df.to_records(index=False)]
 
-def get_bias(dados):
-	
-	global_bias = dados.get_mu()
-	user_bias = np.zeros((dados.get_n_users(), 1))
-	item_bias = np.zeros((dados.get_n_items(), 1))
-
+def set_enviromment(df, content_dict, set_up):
 	'''
-	This was causing ratings > 10. It was replaced
-
-	user_bias = np.reshape(dados.get_users_avg(), (-1,1))
-	item_bias = np.reshape(dados.get_items_avg(), (-1,1))
-	'''
-
-	return global_bias, user_bias, item_bias
-
-def create_embeddings(dados, k, random=False):
-	'''
-		O user e o item embbeding é aleatório numa primeira ida.
-		Aqui há duas opções: Ones ou Random. Default é ones
-	'''
-	def set_with_ones():
-		user_embedding = np.ones((dados.get_n_users(), k))/k
-		item_embedding = np.ones((dados.get_n_items(), k))/k
-		return user_embedding, item_embedding
-	
-	def set_with_random():
-		user_embedding = np.random.random((dados.get_n_users(), k))/k
-		item_embedding = np.random.random((dados.get_n_items(), k))/k
-		return user_embedding, item_embedding
-
-	if not random:
-		user_embedding, item_embedding = set_with_ones()
-	else:
-		user_embedding, item_embedding = set_with_random()
-	
-	return user_embedding, item_embedding
-
-def set_enviromment(df, set_up):
-	'''
-		k = number of factors = embedding_size
+		Sets enviromment to work with
 	'''
 	dados = Dados(df)
-	k, epochs, learning_rate, regularizer, random, verbose = set_up.get()
-	#vector and matrix creation
-	user_embedding, item_embedding = create_embeddings(dados, k, random)
-	
-	global_bias, user_bias, item_bias = get_bias(dados)
+	content = Content(content_dict)
 
-	N = dados.get_N_tuples()
+	#verbose, tokenization, drop_list = set_up.get()
 
-	dados_tuples = dados.get_tuples()
-	
-	if verbose:
-		print("Running model with {} epochs k = {}, l_rt = {}, reg = {} and rand = {}".format(epochs, k, learning_rate, regularizer, random))
-
-	def one_epoch(N, epoch=0, verbose=False):
-		erro = 0
-		for userIndex, itemIndex, r in dados_tuples:
-			
-			ui_dot = 0
-
-			for f in range(k):
-				ui_dot += user_embedding[userIndex,f]*item_embedding[itemIndex, f]
-			
-			r_hat = ui_dot + global_bias + user_bias[userIndex,0] + item_bias[itemIndex, 0]
-			res = r - r_hat
-			
-			user_bias[userIndex, 0] += learning_rate * (res - regularizer * user_bias[userIndex,0])
-			item_bias[itemIndex, 0] += learning_rate * (res - regularizer * item_bias[itemIndex,0])
-
-			erro = erro + res**2
-
-			for f in range(k):
-				#ATENÇÃO MUDEI AQUI: COLOQUEI O 2*L_RT
-				user_embedding[userIndex, f] += 2*learning_rate * (res * item_embedding[itemIndex, f] - regularizer* user_embedding[userIndex, f])
-				item_embedding[itemIndex, f] += 2*learning_rate * (res * user_embedding[userIndex, f] - regularizer* item_embedding[itemIndex, f])
-		
-		if verbose:
-			erro = np.sqrt(erro / N)
-			print("Epoch " + str(epoch) + ": Error: " + str(erro))
-	
-	for i in range(epochs):
-		#start_time = time.time()
-		one_epoch(N, i, True)
-		#print("--- %s : %s seconds ---" % (str(i), time.time() - start_time))
-
-	# Assign
-	dados.set_u_emb(user_embedding)
-	dados.set_i_emb(item_embedding)
-	dados.set_u_bias(user_bias)
-	dados.set_i_bias(item_bias)
-	dados.cleanup_results()
-
-	return dados
+	return dados, content
 
 def print_predictions(test_tuple, predictions):
 	assert len(test_tuple) == len(predictions)
@@ -230,49 +66,184 @@ def print_predictions(test_tuple, predictions):
 		print("{}:{},{}".format(test_tuple[i][0], test_tuple[i][1], predictions[i]))
 	return
 
-def get_predictions(in_, dados, set_up):
+def improve_item_rating(item, content_dict):
+	return
+
+def overall_bias(user_dict, content):
+	'''
+		Calculates bias based on avg
+	'''
+	avg_rating = content.get_avg_rating()
+	user_avg_rating = get_user_avg(user_dict)
+	bruto = user_avg_rating - avg_rating
+	percentual = (user_avg_rating - avg_rating)/avg_rating
+	return bruto, percentual
+
+def overall_weighted_bias(user_dict, content):
+	'''
+		Calculates bias based on weighted avg
+	'''
+	avg_rating = content.get_avg_weight_rating()
+	user_avg_rating = get_user_avg(user_dict)
+	bruto = user_avg_rating - avg_rating
+	percentual = (user_avg_rating - avg_rating)/avg_rating
+	return bruto, percentual
+
+def genre_bias(user_dict, content):
+	one_hot_dict = content.get_one_hot_dict()
+	avg_user_genre = genres_avg_user(user_dict, one_hot_dict)
+	return
+
+def calculate_user_bias(user_dict, content_dict, column='imdbRating'):
 	
-	k, epochs, learning_rate, regularizer, random, verbose = set_up.get()
+	bruto, percentual, count = 0, 0, 0
+	for item, rating in user_dict.items():
+		imdbRating = content_dict[item]['imdbRating']
+		if imdbRating != 0:
+			bruto += rating - imdbRating
+			percentual += (rating - imdbRating)/imdbRating
+			count += 1
+	
+	bruto = bruto/count
+	percentual = percentual/count
+	return bruto, percentual
+
+def get_user_avg(user_dict):
+	user_avg_rating = sum(user_dict.values())/len(user_dict)
+	return user_avg_rating
+
+def item_rating_after_bias(item, user_dict, content_dict, content, perc=True):
+	
+	user_avg_rating = get_user_avg(user_dict)
+	item_avg_rating = content.get_content_dict_item(item, col='imdbRating')
+	item_w_avg_rating = content.get_content_dict_item(item, col='weighted_rate')
+	
+	bruto, percentual = calculate_user_bias(user_dict, content_dict, column='imdbRating')
+	w_bruto, w_percentual = calculate_user_bias(user_dict, content_dict, column='weighted_rate')
+
+	avg_after, w_avg_after = 0,0
+	if perc:
+		avg_after =  item_avg_rating * (1 + percentual)
+		w_avg_after = item_w_avg_rating *(1 + w_percentual)
+	else:
+		avg_after = item_avg_rating + bruto
+		w_avg_after = item_w_avg_rating + w_bruto
+	
+	if item_w_avg_rating == 0:
+		return avg_after
+
+	return np.mean([avg_after, w_avg_after])
+
+def user_and_item(user_dict, item, content, perc=True):
+	
+
+	content_dict, one_hot_dict = content.get_content_dict(), content.get_one_hot_dict()
+	user_avg_rating = get_user_avg(user_dict)
+	item_avg_rating = content_dict[item]['weighted_rate']
+
+	item_after_bias = item_rating_after_bias(item, user_dict, content_dict, content, perc=True)
+	item_after_bias = item_after_bias if item_after_bias>0 else item_avg_rating
+
+	'''
+	genres_profile = generate_profile(user_dict, content, start_perc=0.2)
+	if np.any(one_hot_dict[item]):
+		cos_sim = short_array_cos_sim(genres_profile, one_hot_dict[item])
+	else:
+		cos_sim = 0
+	'''
+
+	plot_rating, genre_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
+	#print(item, plot_rating, genre_rating)
+
+
+	return np.mean([user_avg_rating, item_after_bias, plot_rating, genre_rating])
+
+def user_not_item(user_dict, content, perc=True, show=False):
+	
+	content_dict, one_hot_dict = content.get_content_dict(), content.get_one_hot_dict()
+	bruto, percentual = calculate_user_bias(user_dict, content_dict)
+
+	#genres_avg_user(user_dict, one_hot_dict)	
+	
+	if show:
+		for item, rating in user_dict.items():
+			imdbRating = content_dict[item]['imdbRating']
+			b = imdbRating + bruto
+			p = imdbRating * (1+percentual)
+			print("Rating: {} | imdbRating: {} | bruto: {} | perc: {}".format(rating, imdbRating, b, p))
+	
+	bias = percentual if perc else bruto
+
+	return bias
+
+def item_not_user(item, content_dict, content):
+	
+	pred = 0
+	avg_rating = content.get_avg_rating()
+
+	if content_dict[item]['imdbRating'] == 0:
+		if len(content_dict[item]['Genre']) > 0:
+			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
+			pred = np.average([avg_rating, genre_avg], weights=[1./4, 3./4])
+		else:
+			pred = avg_rating
+
+	elif content_dict[item]['weighted_rate'] == 0:
+		item_avg = content_dict[item]['imdbRating']
+		if len(content_dict[item]['Genre']) > 0:
+			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
+			pred = np.average([avg_rating, genre_avg, item_avg], weights=[0.05, 0.15, 0.8])
+		else:
+			pred = np.average([avg_rating, item_avg], weights=[0.2, 0.8])
+	else:
+		item_avg = content_dict[item]['imdbRating']
+		w_avg = content_dict[item]['weighted_rate']
+
+		if len(content_dict[item]['Genre']) > 0:
+			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
+			pred = np.average([avg_rating, genre_avg, item_avg, w_avg], weights=[0.05, 0.05, 0.1, 0.8])
+		else:
+			pred = np.average([avg_rating, item_avg, w_avg], weights=[0.05, 0.15, 0.8])
+	return pred
+
+def get_predictions(in_, dados, content, set_up, perc=True):
+	
+	verbose, tokenization, drop_list = set_up.get()
 	test_tuple = target_to_list(in_)
 	predictions = []
 
-	#get dicts
-	users_d = dados.get_users_dict()
-	items_d = dados.get_items_dict()
-
-	#get needed bias vectors
-	global_bias = dados.get_mu()
-	user_bias, item_bias = dados.get_bias()
-
-	#get the matrixes
-	user_embedding, item_embedding = dados.get_embeddings()
+	#input related
+	dicio = dados.get_dicio()
+	users_d = dict.fromkeys(dados.get_users(), 0)
+	items_d = dict.fromkeys(dados.get_items(), 0)
 	
-	for i in range(len(test_tuple)):
-		user = test_tuple[i][0]
-		item = test_tuple[i][1]
+	#content related
+	avg_rating = content.get_avg_rating()
+	content_dict = content.get_content_dict()
+	one_hot_dict = content.get_one_hot_dict()
 
+	for user, item in test_tuple:
 		#both were in train
 		if user in users_d and item in items_d:
-			userIndex = users_d[user]
-			itemIndex = items_d[item]
-			ui_dot = 0
-			for f in range(k):
-				ui_dot += user_embedding[userIndex, f] * item_embedding[itemIndex, f]
-			
-			pred = ui_dot + global_bias + user_bias[userIndex, 0] + item_bias[itemIndex, 0]
+			#print(dicio[user])
+			pred = user_and_item(dicio[user], item, content, perc=True)
 			predictions.append(pred)
-
+		
 		#only user in train
 		elif user in users_d:
-			predictions.append(global_bias + user_bias[users_d[user], 0])
+			bias = user_not_item(dicio[user], content)
+			user_rating =  avg_rating*(1+bias) if perc else avg_rating + bias
+			#print(user_rating)
+			predictions.append(user_rating)
 
 		#only item in train
 		elif item in items_d:
-			predictions.append(global_bias + item_bias[items_d[item], 0])
+			pred = item_not_user(item, content_dict, content)
+			predictions.append(pred)
 
 		#frozen
 		else:
-			predictions.append(global_bias)
-
+			predictions.append(avg_rating)
+		
 	print_predictions(test_tuple, predictions)
 	return
