@@ -12,14 +12,18 @@ class Content(object):
 	def __init__(self, content_dict):
 		self.content_dict = content_dict
 		self.tfidf_dict, self.tfidf_dict_sqrd = tok.create_TFIDF(content_dict)
-		self.genre_ratings, self.genre_votes, self.total_ratings, self.total_votes = get_ratings_info(content_dict)
+		self.content_dict = self.set_decade()
+		#self.genre_ratings, self.genre_votes, self.total_ratings, self.total_votes = get_ratings_info(self.content_dict)
+		self.genre_ratings, self.genre_votes, self.decade_ratings, \
+		self.decade_votes, self.total_ratings, self.total_votes = get_ratings_info(self.content_dict) 
+		
 		self.avg_rating = self.set_avg_rating()
 		self.genre_mean = self.set_genre_mean()
 		self.quantile = self.set_movie_quantile()
 		self.content_dict = self.set_weighted_rating()
 		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
-		self.content_dict = self.set_decade()
 		self.one_hot_dict = self.set_one_hot_dict()
+		#self.decade_avg = self.set_decade_avg()
 
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
@@ -57,7 +61,8 @@ class Content(object):
 		return self.content_dict
 
 	def set_avg_weight_ratings(self):
-		genre_ratings, genre_votes, total_ratings, total_votes = get_ratings_info(self.content_dict, column='weighted_rate')
+		genre_ratings, genre_votes, dec_ratings, dec_votes, \
+		total_ratings, total_votes = get_ratings_info(self.content_dict, column='weighted_rate')
 		avg_weight_rating = total_ratings/total_votes
 		genre_mean = {}
 		for g,r in genre_ratings.items():
@@ -172,14 +177,29 @@ def get_ratings_info(content_dict, column='imdbRating'):
 	total_ratings = 0
 	total_votes = 0
 
+	dec_ratings = {}
+	dec_votes = {}
+
 	for item_id, dicio in content_dict.items():
 		total_ratings += dicio[column] * dicio['imdbVotes']
 		total_votes += dicio['imdbVotes']
+		if dicio['Decade'] in dec_ratings:
+			dec_ratings[dicio['Decade']] += dicio[column] * dicio['imdbVotes']
+			dec_votes[dicio['Decade']] += dicio['imdbVotes']
+		elif dicio['Decade'] != 0:
+			dec_ratings[dicio['Decade']] = dicio[column] * dicio['imdbVotes']
+			dec_votes[dicio['Decade']] = dicio['imdbVotes']
+		'''
+		'''
 		for genre in dicio['Genre']:
 			genre_ratings[genre]+= dicio[column] * dicio['imdbVotes']
 			genre_votes[genre]+= dicio['imdbVotes']
 	
-	return genre_ratings, genre_votes, total_ratings, total_votes
+	genre = [genre_ratings, genre_votes]
+	decade = [dec_ratings, dec_votes]
+
+	return genre_ratings, genre_votes, dec_ratings, dec_votes, total_ratings, total_votes
+	#return genre_ratings, genre_votes, total_ratings, total_votes
 
 # ---------- Category possibilities -----
 

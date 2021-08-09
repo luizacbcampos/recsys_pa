@@ -222,15 +222,21 @@ def user_not_item(user_dict, content, perc=True, show=False):
 
 	return np.mean([avg_after, w_avg_after])
 	
+def item_category_avg(item, content, category='Genre'):
+	if category == 'Genre':
+		genre_avg = content.get_movie_avg_genre_rating(content.get_content_dict_item(item, 'Genre'))
+		return genre_avg
+	return 0
 
-def item_not_user(item, content_dict, content):
+def item_not_user(item, content):
 	
 	pred = 0
 	avg_rating = content.get_avg_rating()
+	content_dict = content.get_content_dict()
 
 	if content_dict[item]['imdbRating'] == 0:
 		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
+			genre_avg = item_category_avg(item, content, category='Genre')
 			pred = np.average([avg_rating, genre_avg], weights=[1./4, 3./4])
 		else:
 			pred = avg_rating
@@ -238,19 +244,19 @@ def item_not_user(item, content_dict, content):
 	elif content_dict[item]['weighted_rate'] == 0:
 		item_avg = content_dict[item]['imdbRating']
 		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
+			genre_avg = item_category_avg(item, content, category='Genre')
 			pred = np.average([avg_rating, genre_avg, item_avg], weights=[0.05, 0.15, 0.8])
 		else:
-			pred = np.average([avg_rating, item_avg], weights=[0.2, 0.8])
+			pred = np.average([avg_rating, item_avg], weights=[0.1, 0.9])
 	else:
 		item_avg = content_dict[item]['imdbRating']
 		w_avg = content_dict[item]['weighted_rate']
 
 		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = content.get_movie_avg_genre_rating(content_dict[item]['Genre'])
-			pred = np.average([avg_rating, genre_avg, item_avg, w_avg], weights=[0.05, 0.05, 0.1, 0.8])
+			genre_avg = item_category_avg(item, content, category='Genre')
+			pred = np.average([avg_rating, genre_avg, item_avg, w_avg], weights=[0.05, 0.05, 0.45, 0.45])
 		else:
-			pred = np.average([avg_rating, item_avg, w_avg], weights=[0.05, 0.15, 0.8])
+			pred = np.average([avg_rating, item_avg, w_avg], weights=[0.05, 0.475, 0.475])
 	return pred
 
 def get_predictions(in_, dados, content, set_up, perc=True):
@@ -267,10 +273,9 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	#content related
 	avg_rating = content.get_avg_rating()
 	w_avg_rating = content.get_avg_weight_rating()
-	content_dict = content.get_content_dict()
 
 	pred = 0
-	weights=np.array([1/10, 2/10, 3/10, 3/10, 1/10])
+	weights=np.array([1/20, 10/20, 4/20, 3/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
@@ -284,7 +289,7 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 		#only item in train
 		elif item in items_d:
-			pred = item_not_user(item, content_dict, content)
+			pred = item_not_user(item, content)
 
 		#frozen
 		else:
