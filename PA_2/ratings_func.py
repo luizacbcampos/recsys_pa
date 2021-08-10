@@ -275,7 +275,7 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	w_avg_rating = content.get_avg_weight_rating()
 
 	pred = 0
-	weights=np.array([1/20, 10/20, 4/20, 3/20, 2/20])
+	weights=np.array([1/20, 10/20, 3/20, 4/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
