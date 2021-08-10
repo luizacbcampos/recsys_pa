@@ -66,8 +66,13 @@ def print_predictions(test_tuple, predictions):
 		print("{}:{},{}".format(test_tuple[i][0], test_tuple[i][1], predictions[i]))
 	return
 
-def improve_item_rating(item, content_dict):
-	return
+def get_item_avg(item_avg_rating, item_w_avg_rating):
+	'''
+		Returns mean of imdbRating and weighted rating
+	'''
+	if item_w_avg_rating == 0:
+		return item_avg_rating
+	return np.mean([item_avg_rating, item_w_avg_rating])
 
 def overall_bias(user_dict, content):
 	'''
@@ -135,12 +140,14 @@ def item_rating_after_bias(item, user_dict, content_dict, content, perc=True):
 	return np.mean([avg_after, w_avg_after])
 
 
-def reset_weights(ratings_dict, weights=np.array([1/4, 1/4, 1/4, 1/4])):
+def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 	
 	plot_rating = ratings_dict['plot_rating']
 	genre_rating = ratings_dict['genre_rating']
 	year_rating = ratings_dict['year_rating']
-	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else ratings_dict['weighted_rate']
+	item_avg = get_item_avg(ratings_dict['imdbRating'], ratings_dict['weighted_rate'])
+	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else item_avg
+
 	
 	if plot_rating == -1: #does not have
 		weights[2] = 0
@@ -151,8 +158,6 @@ def reset_weights(ratings_dict, weights=np.array([1/4, 1/4, 1/4, 1/4])):
 	if year_rating == -1: #does not have
 		weights[4]=0
 		year_rating = 0
-
-	#weights = weights/sum(weights)
 	
 	tipo=''
 	if ratings_dict['user_avg_rating'] == 0:
@@ -164,7 +169,7 @@ def reset_weights(ratings_dict, weights=np.array([1/4, 1/4, 1/4, 1/4])):
 	if genre_rating == 0:
 		tipo += "genre_rating"
 
-	vector = [ratings_dict['user_avg_rating'], item_after_bias, plot_rating, genre_rating, year_rating]
+	vector = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 	pred = np.average(vector, weights=weights)
 
 	return pred
@@ -278,7 +283,7 @@ def get_predictions(in_, dados, content, set_up, perc=False):
 	w_avg_rating = content.get_avg_weight_rating()
 
 	pred = 0
-	weights=np.array([1/20, 10/20, 3/20, 4/20, 2/20])
+	weights=np.array([1/20, 5/20, 5/20, 3/20, 4/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
