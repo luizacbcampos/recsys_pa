@@ -278,10 +278,10 @@ def item_not_user(item, content):
 		if content_dict[item]['Decade'] == 0:
 			weights[3] = 0
 		pred = np.average([avg_rating, item_avg, genre_avg, decade_avg], weights=weights)
-		
+
 	return pred
 
-def get_predictions(in_, dados, content, set_up, perc=False):
+def get_predictions(in_, dados, content, set_up, perc=True):
 	
 	verbose, tokenization, drop_list = set_up.get()
 	test_tuple = target_to_list(in_)
