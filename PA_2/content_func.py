@@ -126,6 +126,12 @@ class Content(object):
 		avg = sum(ratings)/sum(votes)
 		return avg
 
+	def get_movie_avg_decade_rating(self, dec):
+		'''
+			Decades avg by vote count
+		'''
+		return self.decade_avg[dec]
+
 	def get_one_hot_dict(self):
 		return self.one_hot_dict
 
@@ -133,22 +139,32 @@ class Content(object):
 
 
 def cossine_similarity(a=[3, 45, 7, 2], b=[2, 54, 13, 15]):
-	#if its not
+	'''
+		Cossine similarity calculation
+	'''
 	cos_sim = (np.array(a) @ np.array(b).T) / (np.linalg.norm(a)*np.linalg.norm(b))
 	return cos_sim
 
-def cossine_call(a, b):
-	if np.any(a) and np.any(b):
-		return short_array_cos_sim(a,b)
-	return 0
 def short_array_cos_sim(a=[3, 45, 7, 2], b=[2, 54, 13, 15]):
+	'''
+		Cossine similarity calculation
+	'''
 	cos_sim = np.inner(a, b) / (np.linalg.norm(a)*np.linalg.norm(b))
 	return cos_sim
 
-def cos_items(item1, item2, content):
-	
-	sim = 0
+def cossine_call(a, b):
+	'''
+		Calls short_array_cos_sim
+	'''
+	if np.any(a) and np.any(b):
+		return short_array_cos_sim(a,b)
+	return 0
 
+def cos_items(item1, item2, content):
+	'''
+		Cossine similarity calculation
+	'''
+	sim = 0
 	item1_tfidf = content.get_item_tfidf_dict(item1)
 	item2_tfidf = content.get_item_tfidf_dict(item2)
 	for word in item1_tfidf.keys():

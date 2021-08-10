@@ -226,6 +226,9 @@ def item_category_avg(item, content, category='Genre'):
 	if category == 'Genre':
 		genre_avg = content.get_movie_avg_genre_rating(content.get_content_dict_item(item, 'Genre'))
 		return genre_avg
+	if category == 'Decade':
+		decade_avg = content.get_movie_avg_decade_rating(content.get_content_dict_item(item, 'Decade'))
+		return decade_avg
 	return 0
 
 def item_not_user(item, content):
@@ -237,7 +240,7 @@ def item_not_user(item, content):
 	if content_dict[item]['imdbRating'] == 0:
 		if len(content_dict[item]['Genre']) > 0:
 			genre_avg = item_category_avg(item, content, category='Genre')
-			pred = np.average([avg_rating, genre_avg], weights=[3./4, 1./4])
+			pred = np.average([avg_rating, genre_avg], weights=[2./4, 2./4])
 		else:
 			pred = avg_rating
 
@@ -259,7 +262,7 @@ def item_not_user(item, content):
 			pred = np.average([avg_rating, item_avg, w_avg], weights=[0.05, 0.475, 0.475])
 	return pred
 
-def get_predictions(in_, dados, content, set_up, perc=True):
+def get_predictions(in_, dados, content, set_up, perc=False):
 	
 	verbose, tokenization, drop_list = set_up.get()
 	test_tuple = target_to_list(in_)
