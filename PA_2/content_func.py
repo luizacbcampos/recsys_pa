@@ -23,7 +23,7 @@ class Content(object):
 		self.content_dict = self.set_weighted_rating()
 		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
 		self.one_hot_dict = self.set_one_hot_dict()
-		#self.decade_avg = self.set_decade_avg()
+		self.decade_avg = self.set_decade_avg()
 
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
@@ -76,6 +76,12 @@ class Content(object):
 			one_hot_dicio[item_id] = vectorize_one_hot(genre_one_hot(dicio['Genre'])) #alredy in vector shape
 		return one_hot_dicio
 	
+	def set_decade_avg(self):
+		decade_mean = {}
+		for g,r in self.decade_ratings.items():
+			decade_mean[g] = r/self.decade_votes[g]
+		return decade_mean
+
 	def get_content_dict(self):
 		return self.content_dict
 
