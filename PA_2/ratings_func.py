@@ -146,17 +146,16 @@ def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 	genre_rating = ratings_dict['genre_rating']
 	year_rating = ratings_dict['year_rating']
 	item_avg = get_item_avg(ratings_dict['imdbRating'], ratings_dict['weighted_rate'])
-	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else item_avg
-
+	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else ratings_dict['weighted_rate']
 	
 	if plot_rating == -1: #does not have
-		weights[2] = 0
+		weights[3] = 0
 		plot_rating = 0
 	if genre_rating == -1: #does not have
-		weights[3] = 0
+		weights[4] = 0
 		genre_rating = 0
 	if year_rating == -1: #does not have
-		weights[4]=0
+		weights[5]=0
 		year_rating = 0
 	
 	tipo=''
@@ -182,7 +181,7 @@ def user_and_item(user_dict, item, content, perc=True, weights=np.array([1/5, 1/
 		'user_avg_rating':get_user_avg(user_dict),
 		'weighted_rate': content.get_content_dict_item(item, col='weighted_rate'),
 		'imdbRating': content.get_content_dict_item(item, col='imdbRating'),
-		'item_after_bias': item_rating_after_bias(item, user_dict, content_dict, content, perc=True)
+		'item_after_bias': item_rating_after_bias(item, user_dict, content_dict, content, perc=perc)
 		}
 
 	plot_rating, genre_rating, year_rating = similarity_calculations(item, user_dict, content, start_perc=0.2)
@@ -243,7 +242,7 @@ def item_not_user(item, content):
 	content_dict = content.get_content_dict()
 
 	if content_dict[item]['imdbRating'] == 0:
-		weights = [4/8, 3/8, 1/8] #avg, genre, decade
+		weights = [6/8, 2/8, 0/8] #avg, genre, decade
 		genre_avg = item_category_avg(item, content, category='Genre')
 		decade_avg = item_category_avg(item, content, category='Decade')
 		if len(content_dict[item]['Genre']) == 0:
@@ -253,19 +252,21 @@ def item_not_user(item, content):
 		pred = np.average([avg_rating, genre_avg, decade_avg], weights=weights)
 
 	elif content_dict[item]['weighted_rate'] == 0:
-		weights = [0.05, 0.8, 0.1, 0.05] #avg, item_avg, genre, decade
+		weights = [0.05, 0.8, 0.15, 0] #avg, item_avg, genre, decade
 		item_avg = content_dict[item]['imdbRating']
 		genre_avg = item_category_avg(item, content, category='Genre')
 		decade_avg = item_category_avg(item, content, category='Decade')
 		
 		if len(content_dict[item]['Genre']) == 0:
 			weights[2] = 0
+			weights[0] = 0.1
+			weights[1] = 0.9
 		if content_dict[item]['Decade'] == 0:
 			weights[3] = 0
 		pred = np.average([avg_rating, item_avg, genre_avg, decade_avg], weights=weights)
 	
 	else:
-		weights = [0.05/2, 0.9, 0.1/2, 0.05/2] #avg, item_avg, genre, decade
+		weights = [0.05, 0.9, 0.05, 0] #avg, item_avg, genre, decade
 		item_avg = content_dict[item]['imdbRating']
 		w_avg = content_dict[item]['weighted_rate']
 		item_avg = np.mean([item_avg, w_avg])
@@ -275,6 +276,7 @@ def item_not_user(item, content):
 		
 		if len(content_dict[item]['Genre']) == 0:
 			weights[2] = 0
+			weights[1] = 0.95
 		if content_dict[item]['Decade'] == 0:
 			weights[3] = 0
 		pred = np.average([avg_rating, item_avg, genre_avg, decade_avg], weights=weights)
@@ -297,7 +299,10 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	w_avg_rating = content.get_avg_weight_rating()
 
 	pred = 0
-	weights=np.array([1/20, 1/20, 9/20, 3/20, 4/20, 2/20])
+	#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
+
+	#weights=np.array([1/20, 10/20, 4/20, 3/20, 2/20])  out 21
+	weights=np.array([1/20, 0, 10/20, 4/20, 3/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
