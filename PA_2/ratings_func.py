@@ -284,7 +284,7 @@ def get_predictions(in_, dados, content, set_up, perc=False):
 		#both were in train
 		if user in users_d and item in items_d:
 			#print(dicio[user])
-			pred = user_and_item(dicio[user], item, content, perc=True, weights=weights)
+			pred = user_and_item(dicio[user], item, content, perc=perc, weights=weights)
 		
 		#only user in train
 		elif user in users_d:
