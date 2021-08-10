@@ -305,28 +305,20 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	one_hot_dict = content.get_one_hot_dict()
 	for item_id, rating in user_dict.items():
 		sim = cos_items(item, item_id, content)
-		if sim == 0:
-			sim = content.get_content_dict_item(item, col='imdbRating')/10
-			plot_rating += item_avg
-		else:
-			plot_rating += rating * sim
+		plot_rating += rating * sim
 		plot_sim += abs(sim)
 
 		sim = cossine_call(one_hot_dict[item_id], one_hot_dict[item])
-		if sim == 0:
-			sim = content.get_content_dict_item(item, col='imdbRating')/10
-			genre_rating += item_avg
-		else:
-			genre_rating += rating * sim
+		genre_rating += rating * sim
 		genre_sim += abs(sim)
 
 		sim = similarity_year(decade_value, content.get_content_dict_item(item_id, col='Decade'), weight=0.75)
 		year_rating += rating * sim
 		year_sim += abs(sim)
 	
-	plot_rating = plot_rating/plot_sim if plot_sim != 0 else 0 
-	genre_rating = genre_rating/genre_sim if genre_sim != 0 else 0
-	year_rating = year_rating/year_sim if year_sim != 0 else 0
+	plot_rating = plot_rating/plot_sim if plot_sim != 0 else item_avg 
+	genre_rating = genre_rating/genre_sim if genre_sim != 0 else item_avg
+	year_rating = year_rating/year_sim if year_sim != 0 else item_avg
 
 	#sanity checks
 	plot_rating = -1 if qtd_plot == 0 else plot_rating
