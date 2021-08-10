@@ -297,6 +297,7 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	plot_rating, plot_sim, qtd_plot = 0, 0, len(content.get_content_dict_item(item, col='Plot')) 
 	genre_rating, genre_sim, qtd_genre = 0, 0, len(content.get_content_dict_item(item, col='Genre'))
 	year_rating, year_sim, decade_value = 0,0, content.get_content_dict_item(item, col='Decade')
+	item_avg = content.get_content_dict_item(item, col='imdbRating')
 
 	if qtd_genre == 0 and qtd_plot == 0 and decade_value == 0: #item does not have this info
 		return -1, -1, -1
@@ -304,6 +305,7 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	one_hot_dict = content.get_one_hot_dict()
 	for item_id, rating in user_dict.items():
 		sim = cos_items(item, item_id, content)
+		sim = sim if sim != 0 else content.get_content_dict_item(item_id, col='imdbRating')/10
 		plot_rating += rating * sim
 		plot_sim += abs(sim)
 
