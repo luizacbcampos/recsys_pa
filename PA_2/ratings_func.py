@@ -243,11 +243,14 @@ def item_not_user(item, content):
 	content_dict = content.get_content_dict()
 
 	if content_dict[item]['imdbRating'] == 0:
-		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = item_category_avg(item, content, category='Genre')
-			pred = np.average([avg_rating, genre_avg], weights=[2./4, 2./4])
-		else:
-			pred = avg_rating
+		weights = [4/8, 3/8, 1/8] #avg, genre, decade
+		genre_avg = item_category_avg(item, content, category='Genre')
+		decade_avg = item_category_avg(item, content, category='Decade')
+		if len(content_dict[item]['Genre']) == 0:
+			weights[1] = 0
+		if content_dict[item]['Decade'] == 0:
+			weights[2] = 0
+		pred = np.average([avg_rating, genre_avg, decade_avg], weights=weights)
 
 	elif content_dict[item]['weighted_rate'] == 0:
 		item_avg = content_dict[item]['imdbRating']
@@ -283,7 +286,7 @@ def get_predictions(in_, dados, content, set_up, perc=False):
 	w_avg_rating = content.get_avg_weight_rating()
 
 	pred = 0
-	weights=np.array([1/20, 5/20, 5/20, 3/20, 4/20, 2/20])
+	weights=np.array([1/20, 1/20, 9/20, 3/20, 4/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
