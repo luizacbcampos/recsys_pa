@@ -310,6 +310,7 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 		plot_sim += abs(sim)
 
 		sim = cossine_call(one_hot_dict[item_id], one_hot_dict[item])
+		sim = sim if sim != 0 else content.get_content_dict_item(item_id, col='imdbRating')/10
 		genre_rating += rating * sim
 		genre_sim += abs(sim)
 
