@@ -253,21 +253,32 @@ def item_not_user(item, content):
 		pred = np.average([avg_rating, genre_avg, decade_avg], weights=weights)
 
 	elif content_dict[item]['weighted_rate'] == 0:
+		weights = [0.05, 0.8, 0.1, 0.05] #avg, item_avg, genre, decade
 		item_avg = content_dict[item]['imdbRating']
-		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = item_category_avg(item, content, category='Genre')
-			pred = np.average([avg_rating, genre_avg, item_avg], weights=[0.05, 0.15, 0.8])
-		else:
-			pred = np.average([avg_rating, item_avg], weights=[0.1, 0.9])
+		genre_avg = item_category_avg(item, content, category='Genre')
+		decade_avg = item_category_avg(item, content, category='Decade')
+		
+		if len(content_dict[item]['Genre']) == 0:
+			weights[2] = 0
+		if content_dict[item]['Decade'] == 0:
+			weights[3] = 0
+		pred = np.average([avg_rating, item_avg, genre_avg, decade_avg], weights=weights)
+	
 	else:
+		weights = [0.05/2, 0.9, 0.1/2, 0.05/2] #avg, item_avg, genre, decade
 		item_avg = content_dict[item]['imdbRating']
 		w_avg = content_dict[item]['weighted_rate']
+		item_avg = np.mean([item_avg, w_avg])
 
-		if len(content_dict[item]['Genre']) > 0:
-			genre_avg = item_category_avg(item, content, category='Genre')
-			pred = np.average([avg_rating, genre_avg, item_avg, w_avg], weights=[0.05, 0.05, 0.45, 0.45])
-		else:
-			pred = np.average([avg_rating, item_avg, w_avg], weights=[0.05, 0.475, 0.475])
+		genre_avg = item_category_avg(item, content, category='Genre')
+		decade_avg = item_category_avg(item, content, category='Decade')
+		
+		if len(content_dict[item]['Genre']) == 0:
+			weights[2] = 0
+		if content_dict[item]['Decade'] == 0:
+			weights[3] = 0
+		pred = np.average([avg_rating, item_avg, genre_avg, decade_avg], weights=weights)
+		
 	return pred
 
 def get_predictions(in_, dados, content, set_up, perc=False):
