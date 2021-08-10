@@ -301,8 +301,8 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	pred = 0
 	#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 
-	#weights=np.array([1/20, 10/20, 4/20, 3/20, 2/20])  out 21
-	weights=np.array([1/20, 0, 10/20, 4/20, 3/20, 2/20])
+	#weights=np.array([1/20, 0, 10/20, 4/20, 3/20, 2/20]) out 21
+	weights=np.array([1/20, 1/20, 9/20, 3/20, 4/20, 2/20])
 
 	for user, item in test_tuple:
 		#both were in train
