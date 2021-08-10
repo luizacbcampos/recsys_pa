@@ -169,11 +169,11 @@ def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 
 	#parte nova
 	if plot_rating == 0:
-		plot_rating = item_after_bias
+		plot_rating = item_avg
 	if genre_rating == 0:
-		genre_rating = item_after_bias
+		genre_rating = item_avg
 	if year_rating == 0:
-		year_rating = item_after_bias
+		year_rating = item_avg
 
 	vector = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 	pred = np.average(vector, weights=weights)
@@ -310,7 +310,8 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 	#weights=np.array([1/20, 0, 10/20, 4/20, 3/20, 2/20]) out 21
 	#weights=np.array([1/20, 1/20, 9/20, 3/20, 4/20, 2/20]) out 27
-	weights=np.array([1/20, 5/20, 5/20, 3/20, 4/20, 2/20])
+	#weights=np.array([1/20, 5/20, 5/20, 3/20, 4/20, 2/20]) out 30
+	weights=np.array([3/40, 11/40, 10/40, 6/40, 7/40, 3/40])
 
 	for user, item in test_tuple:
 		#both were in train
