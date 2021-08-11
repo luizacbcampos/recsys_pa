@@ -334,7 +334,8 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 		#frozen
 		else:
 			#pred = np.mean([w_avg_rating, avg_rating])
-			pred = np.mean([avg_rating, mean_rating, w_avg_rating, w_mean_rating])
+			#pred = np.mean([avg_rating, mean_rating, w_avg_rating, w_mean_rating])
+			pred = np.mean([mean_rating, w_mean_rating])
 		
 		#sanity check
 		pred = 10 if pred>10 else pred
