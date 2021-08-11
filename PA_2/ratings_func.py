@@ -103,7 +103,7 @@ def calculate_user_bias(user_dict, content_dict, column='imdbRating'):
 	
 	bruto, percentual, count = 0, 0, 0
 	for item, rating in user_dict.items():
-		imdbRating = content_dict[item]['imdbRating']
+		imdbRating = content_dict[item][column]
 		if imdbRating != 0:
 			bruto += rating - imdbRating
 			percentual += (rating - imdbRating)/imdbRating
@@ -333,10 +333,9 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 		#frozen
 		else:
-			#pred = np.mean([w_avg_rating, avg_rating])
 			#pred = np.mean([avg_rating, mean_rating, w_avg_rating, w_mean_rating])
 			#pred = np.mean([mean_rating, w_mean_rating])
-			pred = mean_rating
+			pred = np.mean([w_avg_rating, avg_rating])
 		
 		#sanity check
 		pred = 10 if pred>10 else pred
