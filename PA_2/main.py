@@ -64,7 +64,7 @@ drops = ['Rated', 'Released', 'Runtime', 'Director', 'Writer', 'Actors', 'Langua
 		'Poster', 'Metascore', 'imdbID', 'Type', 'Response', 'Error', 'Season', 'Episode', 'seriesID']
 
 #w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
-w = np.array([0/40, 12/40, 11/40, 7/40, 7/40, 3/40])
+w = np.array([0/40, 9/40, 14/40, 7/40, 7/40, 3/40])
 #w = np.array([1/40, 12/40, 10/40, 7/40, 7/40, 3/40])
 
 set_up = Setup(verbose=False, lower_=True, number=True, apostrophe=True, punctuation=True, 
