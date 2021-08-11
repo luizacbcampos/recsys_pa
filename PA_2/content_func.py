@@ -360,11 +360,11 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 
 	#sanity checks
 	if qtd_plot == 0:
-		plot_rating = -1
+		plot_rating = item_avg #-1
 	if qtd_genre == 0:
-		genre_rating = -1
+		genre_rating = item_avg #-1
 	if decade_value == 0:
-		year_rating = -1
+		year_rating = item_avg #-1
 
 	return plot_rating, genre_rating, year_rating
 
