@@ -22,9 +22,9 @@ targets_file = "targets.csv"
 content_file = "content.csv"
 
 if len(sys.argv) > 3:
-	ratings_file = sys.argv[1]
-	targets_file = sys.argv[2]
-	content_file = sys.argv[3]
+	content_file = sys.argv[1]
+	ratings_file = sys.argv[2]
+	targets_file = sys.argv[3]
 
 #---------------- Auxiliary functions ----------------------
 
