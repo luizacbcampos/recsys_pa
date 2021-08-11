@@ -326,7 +326,7 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	item_avg = get_item_avg(content.get_content_dict_item(item, col='imdbRating'), content.get_content_dict_item(item, col='weighted_rate'))
 
 	if qtd_genre == 0 and qtd_plot == 0 and decade_value == 0: #item does not have this info
-		return item_avg, item_avg, item_avg #-1, -1, -1
+		return -1, -1, -1
 
 	one_hot_dict = content.get_one_hot_dict()
 	for item_id, rating in user_dict.items():
@@ -360,11 +360,11 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 
 	#sanity checks
 	if qtd_plot == 0:
-		plot_rating = item_avg #-1
+		plot_rating = -1
 	if qtd_genre == 0:
-		genre_rating = item_avg #-1
+		genre_rating = -1
 	if decade_value == 0:
-		year_rating = item_avg #-1
+		year_rating = -1
 
 	return plot_rating, genre_rating, year_rating
 

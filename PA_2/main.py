@@ -63,7 +63,8 @@ df = load_ratings(ratings_file)
 drops = ['Rated', 'Released', 'Runtime', 'Director', 'Writer', 'Actors', 'Language', 'Country', 'Awards', 
 		'Poster', 'Metascore', 'imdbID', 'Type', 'Response', 'Error', 'Season', 'Episode', 'seriesID']
 
-w = np.array([3/40, 11/40, 10/40, 6/40, 7/40, 3/40])
+#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
+w = np.array([0.05, 0.5, 0.2, 0.09, 0.11, 0.05])
 
 set_up = Setup(verbose=False, lower_=True, number=True, apostrophe=True, punctuation=True, 
 	stem='snowball', accents=True, drop_list=drops, weights=w, perc=True)
