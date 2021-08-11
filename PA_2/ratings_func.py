@@ -171,15 +171,6 @@ def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 		tipo += "genre_rating"
 	'''
 
-	#parte nova
-	'''
-	if plot_rating == 0:
-		plot_rating = item_avg
-	if genre_rating == 0:
-		genre_rating = item_avg
-	if year_rating == 0:
-		year_rating = item_avg
-	'''
 	vector = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 	pred = np.average(vector, weights=weights)
 
@@ -293,9 +284,10 @@ def item_not_user(item, content):
 
 	return pred
 
-def get_predictions(in_, dados, content, set_up, perc=True):
+def get_predictions(in_, dados, content, set_up):
 	
-	verbose, tokenization, drop_list = set_up.get()
+	verbose, tokenization, drop_list, weights, perc = set_up.get()
+
 	test_tuple = target_to_list(in_)
 	predictions = []
 
@@ -312,12 +304,12 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 
 	pred = 0
-	#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 
+	#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 	#weights=np.array([1/20, 0, 10/20, 4/20, 3/20, 2/20]) out 21
 	#weights=np.array([1/20, 1/20, 9/20, 3/20, 4/20, 2/20]) out 27
 	#weights=np.array([1/20, 5/20, 5/20, 3/20, 4/20, 2/20]) out 30
-	weights=np.array([3/40, 11/40, 10/40, 6/40, 7/40, 3/40])
+	#weights=np.array([3/40, 11/40, 10/40, 6/40, 7/40, 3/40])
 
 	for user, item in test_tuple:
 		#both were in train
@@ -335,8 +327,6 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 		#frozen
 		else:
-			#pred = np.mean([avg_rating, mean_rating, w_avg_rating, w_mean_rating])
-			#pred = np.mean([mean_rating, w_mean_rating])
 			pred = np.mean([w_avg_rating, avg_rating])
 		
 		#sanity check

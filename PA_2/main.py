@@ -28,14 +28,6 @@ if len(sys.argv) > 3:
 
 #---------------- Auxiliary functions ----------------------
 
-def print_full(x):
-	'''
-		Prints dataframe in full
-	'''
-	pd.set_option('display.max_rows', len(x))
-	print(x)
-	pd.reset_option('display.max_rows')
-
 def print_list(lista):
 	'''
 		Prints full list
@@ -45,6 +37,8 @@ def print_list(lista):
 
 def non_zero_dict(dicio):
 	return {k: v for k, v in dicio.items() if v != 0}
+
+#---------------- Loading functions ----------------------
 
 def load_ratings(ratings_file):
 	'''
@@ -62,15 +56,17 @@ def load_targets(targets_file):
 	return pd.read_csv(targets_file, sep=':', dtype={"UserId": "string", "ItemId": "string"})
 
 
-
+#---------------- Main ----------------------
 
 df = load_ratings(ratings_file)
 
 drops = ['Rated', 'Released', 'Runtime', 'Director', 'Writer', 'Actors', 'Language', 'Country', 'Awards', 
 		'Poster', 'Metascore', 'imdbID', 'Type', 'Response', 'Error', 'Season', 'Episode', 'seriesID']
 
+w = np.array([3/40, 11/40, 10/40, 6/40, 7/40, 3/40])
+
 set_up = Setup(verbose=False, lower_=True, number=True, apostrophe=True, punctuation=True, 
-	stem='snowball', accents=True, drop_list=drops)
+	stem='snowball', accents=True, drop_list=drops, weights=w, perc=True)
 
 content_dict = load_content(content_file, drop_list=set_up.get_drop_list())
 
