@@ -22,18 +22,19 @@ class Content(object):
 		self.quantile = self.set_movie_quantile()
 		self.content_dict = self.set_weighted_rating()
 		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
+		self.mean_weight_rating = self.set_mean_rating(column='weighted_rate')
 		self.one_hot_dict = self.set_one_hot_dict()
 		self.decade_avg = self.set_decade_avg()
 		
-		#print("Avg rating: {} | Média: {} | Avg weight_rating: {}".format(self.avg_rating, self.mean_rating, self.avg_weight_rating))
-		
-	def set_mean_rating(self):
+		#print("Avg R: {} | Média: {} | Avg WR: {} | Mean WR: {}".format(self.avg_rating, self.mean_rating, self.avg_weight_rating, self.mean_weight_rating))
+		#exit()
+	def set_mean_rating(self, column='imdbRating'):
 		r = []
 		for item_id, dicio in self.content_dict.items():
-			if dicio['imdbRating'] != 0:
-				r.append(dicio['imdbRating'])
+			if dicio[column] != 0:
+				r.append(dicio[column])
 		return np.mean(r)
-		
+
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
 
@@ -103,6 +104,9 @@ class Content(object):
 	def get_movie_quantile(self):
 		return self.quantile
 
+	def get_mean_weight_rating(self):
+		return self.mean_weight_rating
+		
 	def get_avg_weight_rating(self):
 		return self.avg_weight_rating
 

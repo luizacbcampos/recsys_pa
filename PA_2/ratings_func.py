@@ -304,7 +304,10 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 	
 	#content related
 	avg_rating = content.get_avg_rating()
+	mean_rating = content.get_mean_rating()
 	w_avg_rating = content.get_avg_weight_rating()
+	w_mean_rating = content.get_mean_weight_rating()
+
 
 	pred = 0
 	#w = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
@@ -330,10 +333,8 @@ def get_predictions(in_, dados, content, set_up, perc=True):
 
 		#frozen
 		else:
-			if w_avg_rating == 0:
-				pred = avg_rating
-			else:
-				pred = np.mean([w_avg_rating, avg_rating])
+			#pred = np.mean([w_avg_rating, avg_rating])
+			pred = np.mean([avg_rating, mean_rating, w_avg_rating, w_mean_rating])
 		
 		#sanity check
 		pred = 10 if pred>10 else pred
