@@ -246,7 +246,8 @@ def item_category_avg(item, content, category='Genre'):
 def item_not_user(item, content):
 	
 	pred = 0
-	avg_rating = content.get_avg_rating()
+	avg_rating = np.mean([content.get_avg_rating(), content.get_avg_weight_rating()])
+
 	content_dict = content.get_content_dict()
 
 	if content_dict[item]['imdbRating'] == 0:
