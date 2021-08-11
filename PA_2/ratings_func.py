@@ -114,6 +114,9 @@ def calculate_user_bias(user_dict, content_dict, column='imdbRating'):
 	return bruto, percentual
 
 def get_user_avg(user_dict):
+	'''
+		Returns the user mean rating
+	'''
 	user_avg_rating = sum(user_dict.values())/len(user_dict)
 	return user_avg_rating
 
@@ -145,6 +148,7 @@ def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 	plot_rating = ratings_dict['plot_rating']
 	genre_rating = ratings_dict['genre_rating']
 	year_rating = ratings_dict['year_rating']
+	
 	item_avg = get_item_avg(ratings_dict['imdbRating'], ratings_dict['weighted_rate'])
 	item_after_bias = ratings_dict['item_after_bias'] if ratings_dict['item_after_bias']>0 else ratings_dict['weighted_rate']
 	
@@ -229,9 +233,6 @@ def user_not_item(user_dict, content, perc=True, show=False):
 		avg_after = avg_rating + bruto
 		w_avg_after = avg_w_rating + w_bruto
 	
-	if avg_w_rating == 0:
-		return avg_after
-
 	return np.mean([avg_after, w_avg_after])
 	
 def item_category_avg(item, content, category='Genre'):

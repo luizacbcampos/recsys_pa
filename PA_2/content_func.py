@@ -106,7 +106,7 @@ class Content(object):
 
 	def get_mean_weight_rating(self):
 		return self.mean_weight_rating
-		
+
 	def get_avg_weight_rating(self):
 		return self.avg_weight_rating
 
@@ -297,6 +297,16 @@ def genres_avg_user(user_dict, one_hot_dict):
 	
 	return avg_user_genre
 
+# ---------- Similarity -----------
+
+def get_item_avg(item_avg_rating, item_w_avg_rating):
+	'''
+		Returns mean of imdbRating and weighted rating
+	'''
+	if item_w_avg_rating == 0:
+		return item_avg_rating
+	return np.mean([item_avg_rating, item_w_avg_rating])
+
 def similarity_year(dec1, dec2, weight=0.75):
 	
 	if dec2 == 0 or dec1 == 0:
@@ -313,7 +323,7 @@ def similarity_calculations(item, user_dict, content, start_perc=0.2):
 	plot_rating, plot_sim, qtd_plot = 0, 0, len(content.get_content_dict_item(item, col='Plot')) 
 	genre_rating, genre_sim, qtd_genre = 0, 0, len(content.get_content_dict_item(item, col='Genre'))
 	year_rating, year_sim, decade_value = 0,0, content.get_content_dict_item(item, col='Decade')
-	item_avg = content.get_content_dict_item(item, col='imdbRating')
+	item_avg = get_item_avg(content.get_content_dict_item(item, col='imdbRating'), content.get_content_dict_item(item, col='weighted_rate'))
 
 	if qtd_genre == 0 and qtd_plot == 0 and decade_value == 0: #item does not have this info
 		return -1, -1, -1
