@@ -15,13 +15,13 @@ class Content(object):
 		self.content_dict = self.set_decade()
 		self.genre_ratings, self.genre_votes, self.decade_ratings, \
 		self.decade_votes, self.total_ratings, self.total_votes = get_ratings_info(self.content_dict) 
-		self.mean_rating = self.set_mean_rating()
 		self.avg_rating = self.set_avg_rating()
+		self.mean_rating = self.set_mean_rating()
 
 		self.genre_mean = self.set_genre_mean()
 		self.quantile = self.set_movie_quantile()
-		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
 		self.content_dict = self.set_weighted_rating()
+		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
 		self.one_hot_dict = self.set_one_hot_dict()
 		self.decade_avg = self.set_decade_avg()
 		
@@ -33,6 +33,7 @@ class Content(object):
 			if dicio['imdbRating'] != 0:
 				r.append(dicio['imdbRating'])
 		return np.mean(r)
+		
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
 
