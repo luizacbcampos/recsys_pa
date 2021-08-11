@@ -268,4 +268,10 @@ if __name__ == '__main__':
 	print(re.sub(r'([\d]+\.[\d]|[\d]+)(?![\w])', lambda m: num2words(m.group(), to='cardinal'), target_string))
 	print(re.sub(r'([\d]*1[ ]*st|[\d]*2[ ]*nd|[\d]*3[ ]*rd|[\d]*3[ ]*rd|[\d]+[ ]*th)(?![\w])', lambda m: num2words(re.match(r'[\d]+',m.group()).group(), ordinal=True, to='ordinal'), target_string))
 
-	print(strip_accents('"Montréal, über, 12.89, Mère, Françoise, noël, 889"'))
+	print(strip_accents('"Montréal, über, 12.89, Mère, Françoise, noël, 889 and 45th"'))
+
+
+	teste = "In Montréal, Françoise's 5th four-hour über was only 12.89 dollars"
+
+	tokens = tokenize_plot(teste)
+	print(tokens)

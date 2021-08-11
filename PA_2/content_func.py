@@ -13,18 +13,26 @@ class Content(object):
 		self.content_dict = content_dict
 		self.tfidf_dict, self.tfidf_dict_sqrd = tok.create_TFIDF(content_dict)
 		self.content_dict = self.set_decade()
-		#self.genre_ratings, self.genre_votes, self.total_ratings, self.total_votes = get_ratings_info(self.content_dict)
 		self.genre_ratings, self.genre_votes, self.decade_ratings, \
 		self.decade_votes, self.total_ratings, self.total_votes = get_ratings_info(self.content_dict) 
-		
+		self.mean_rating = self.set_mean_rating()
 		self.avg_rating = self.set_avg_rating()
+
 		self.genre_mean = self.set_genre_mean()
 		self.quantile = self.set_movie_quantile()
-		self.content_dict = self.set_weighted_rating()
 		self.avg_weight_rating, self.weight_genre_mean = self.set_avg_weight_ratings()
+		self.content_dict = self.set_weighted_rating()
 		self.one_hot_dict = self.set_one_hot_dict()
 		self.decade_avg = self.set_decade_avg()
-
+		
+		#print("Avg rating: {} | Média: {} | Avg weight_rating: {}".format(self.avg_rating, self.mean_rating, self.avg_weight_rating))
+		
+	def set_mean_rating(self):
+		r = []
+		for item_id, dicio in self.content_dict.items():
+			if dicio['imdbRating'] != 0:
+				r.append(dicio['imdbRating'])
+		return np.mean(r)
 	def set_avg_rating(self):
 		return self.total_ratings/self.total_votes
 
@@ -46,7 +54,7 @@ class Content(object):
 		return np.quantile(votes, 0.1)
 
 	def set_weighted_rating(self):
-		C = self.avg_rating
+		C = self.mean_rating #self.avg_rating
 		m = self.quantile
 		
 		def weighted_rate(v, R):
@@ -84,6 +92,9 @@ class Content(object):
 
 	def get_content_dict(self):
 		return self.content_dict
+
+	def get_mean_rating(self):
+		return self.mean_rating
 
 	def get_avg_rating(self):
 		return self.avg_rating
@@ -384,4 +395,10 @@ if __name__ == '__main__':
 	from functools import partial
 	from timer import time_a_function, compare_many_functions
 
+
+	_list = ['Action', 'Thriller']
+	print(genre_one_hot(_list))
+
 	a = 1
+
+
