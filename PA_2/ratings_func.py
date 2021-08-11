@@ -168,13 +168,14 @@ def reset_weights(ratings_dict, weights=np.array([1/5, 1/5, 1/5, 1/5, 1/5])):
 	'''
 
 	#parte nova
+	'''
 	if plot_rating == 0:
 		plot_rating = item_avg
 	if genre_rating == 0:
 		genre_rating = item_avg
 	if year_rating == 0:
 		year_rating = item_avg
-
+	'''
 	vector = [ratings_dict['user_avg_rating'], item_avg, item_after_bias, plot_rating, genre_rating, year_rating]
 	pred = np.average(vector, weights=weights)
 
